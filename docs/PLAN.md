@@ -115,7 +115,7 @@ Rules:
 - `parse_rooms` returns `None` without an integer `mapId`, and skips entries without an integer `id` and a string `name`.
 - Empty chunks (`pointCounts` 0) are valid.
 
-**Tests:** every fixture; the real Nova frame in `fixtures/frames.json`; the name table in PROTOCOL.md; garbage input (not base64, base64 of non-JSON, JSON list, missing fields, wrong types, non-integer points).
+**Tests:** every fixture; the Nova-shaped frame in `fixtures/frames.json` (made-up values); the name table in PROTOCOL.md; garbage input (not base64, base64 of non-JSON, JSON list, missing fields, wrong types, non-integer points).
 
 Also a test over `captures/messages.jsonl` when that file exists (the owner's real capture, git-ignored; skip the test when it's missing, as CI has none). It checks the decoder against real data: nothing raises, the counts per `infoType` are non-zero, every path chunk is indexed consistently. It must print nothing from the file.
 
