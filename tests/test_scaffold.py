@@ -25,6 +25,35 @@ def test_path_chunk_fixture_indexes_add_up():
     assert len(data["posArray"]) == data["pointCounts"]
 
 
+def test_path_chunks_are_consistent():
+    chunks = [f["decoded"] for f in FIXTURES if f["decoded"]["infoType"] == 21011]
+    assert len(chunks) > 5
+    for chunk in chunks:
+        data = chunk["data"]
+        assert len(data["posArray"]) == data["pointCounts"]
+        assert data["startPos"] + data["pointCounts"] <= data["totalPoints"]
+
+
+def test_live_run_chunks_agree_where_they_overlap():
+    live = [
+        f["decoded"]["data"] for f in FIXTURES if f["name"].startswith("path_live_")
+    ]
+    points = {}
+    for data in live:
+        for offset, point in enumerate(data["posArray"]):
+            assert points.setdefault(data["startPos"] + offset, point) == point
+    assert sorted(points) == list(range(len(points)))
+
+
+def test_room_names_decode_to_unicode_code_points():
+    rooms = next(f for f in FIXTURES if f["name"] == "room_list")
+    names = [r["name"] for r in rooms["decoded"]["data"]["autoAreaValue"]]
+    decoded = [
+        "".join(chr(int(p, 36)) for p in n.split("+")) for n in names if "+" in n
+    ]
+    assert "Montaña" in decoded and "Sótano" in decoded
+
+
 def test_core_does_not_import_home_assistant():
     for path in CORE.rglob("*.py"):
         for node in ast.walk(ast.parse(path.read_text())):

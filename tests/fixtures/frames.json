@@ -8,7 +8,40 @@
       "data": {
         "pathID": 1708023426,
         "pointCounts": 8,
-        "posArray": [[-1911, -1311], [-1947, -1331], [-1995, -1339], [-2047, -1339], [-2099, -1331], [-2143, -1319], [-2187, -1307], [-2223, -1291]],
+        "posArray": [
+          [
+            -1911,
+            -1311
+          ],
+          [
+            -1947,
+            -1331
+          ],
+          [
+            -1995,
+            -1339
+          ],
+          [
+            -2047,
+            -1339
+          ],
+          [
+            -2099,
+            -1331
+          ],
+          [
+            -2143,
+            -1319
+          ],
+          [
+            -2187,
+            -1307
+          ],
+          [
+            -2223,
+            -1291
+          ]
+        ],
         "startPos": 99,
         "totalPoints": 107
       },
@@ -22,39 +55,704 @@
     "source": "Real decoded frame, public: https://github.com/make-all/tuya-local/issues/1660",
     "dp": "102",
     "decoded": {
-      "data": {"cleanArea": 11, "cleanTime": 570, "elec": 82, "elecReal": 82, "mode": "sweep", "subMode": "smart", "timeStamp": 1708024009},
+      "data": {
+        "cleanArea": 11,
+        "cleanTime": 570,
+        "elec": 82,
+        "elecReal": 82,
+        "mode": "sweep",
+        "subMode": "smart",
+        "timeStamp": 1708024009
+      },
       "infoType": 20001
     }
   },
   {
-    "name": "room_list_reconstructed",
-    "source": "RECONSTRUCTED from notes, values made up, shape unconfirmed: replace in phase 0",
+    "name": "room_list",
+    "source": "SYNTHETIC: same structure as a real Rowenta capture (2026-11-04), every value made up",
     "dp": "127",
+    "b64": "eyJkSW5mbyI6eyJ0cyI6IjE2MDAwMDAwMDAwMDAiLCJ1c2VySWQiOiJleGFtcGxlLXVzZXItaWQifSwiZGF0YSI6eyJhdXRvQXJlYVZhbHVlIjpbeyJhY3RpdmUiOiJub3JtYWwiLCJjbGVhbk9yZGVyIjowLCJjbGVhblR5cGUiOiJzd2VlcE9ubHkiLCJpZCI6MSwibW9kZSI6ImF1dG9sYXllciIsIm5hbWUiOiIyYis2ciszOCsycCszMiszMyIsInRhZyI6IjAiLCJ2ZXJ0ZXhzIjpbWzAsMF0sWzAsMF0sWzAsMF0sWzAsMF1dfSx7ImFjdGl2ZSI6Im5vcm1hbCIsImNsZWFuT3JkZXIiOjAsImNsZWFuVHlwZSI6InN3ZWVwT25seSIsImlkIjoyLCJtb2RlIjoiYXV0b2xheWVyIiwibmFtZSI6IjI1KzMzKzMyKzM4KzJwKzZwKzJwIiwidGFnIjoiMSIsInZlcnRleHMiOltbMCwwXSxbMCwwXSxbMCwwXSxbMCwwXV19LHsiYWN0aXZlIjoibm9ybWFsIiwiY2xlYW5PcmRlciI6MCwiY2xlYW5UeXBlIjoic3dlZXBPbmx5IiwiaWQiOjMsIm1vZGUiOiJhdXRvbGF5ZXIiLCJuYW1lIjoiMjArMnArMzArMzAiLCJ0YWciOiIyIiwidmVydGV4cyI6W1swLDBdLFswLDBdLFswLDBdLFswLDBdXX0seyJhY3RpdmUiOiJub3JtYWwiLCJjbGVhbk9yZGVyIjowLCJjbGVhblR5cGUiOiJzd2VlcE9ubHkiLCJpZCI6NCwibW9kZSI6ImF1dG9sYXllciIsIm5hbWUiOiIyYiszOCszOSsycysyeCszMyIsInRhZyI6IjMiLCJ2ZXJ0ZXhzIjpbWzAsMF0sWzAsMF0sWzAsMF0sWzAsMF1dfSx7ImFjdGl2ZSI6Im5vcm1hbCIsImNsZWFuT3JkZXIiOjAsImNsZWFuVHlwZSI6InN3ZWVwT25seSIsImlkIjo1LCJtb2RlIjoiYXV0b2xheWVyIiwibmFtZSI6IlJvb201IiwidGFnIjoiNCIsInZlcnRleHMiOltbMCwwXSxbMCwwXSxbMCwwXSxbMCwwXV19LHsiYWN0aXZlIjoibm9ybWFsIiwiY2xlYW5PcmRlciI6MCwiY2xlYW5UeXBlIjoic3dlZXBPbmx5IiwiaWQiOjYsIm1vZGUiOiJhdXRvbGF5ZXIiLCJuYW1lIjoiMXorMnArMzYrMnArMnYrMnQiLCJ0YWciOiI1IiwidmVydGV4cyI6W1swLDBdLFswLDBdLFswLDBdLFswLDBdXX1dLCJtYXBJZCI6MTAwMDAwMDAwMSwic24iOiJFWEFNUExFLVNOLTAwMDEiLCJ1c2VySWQiOiJleGFtcGxlLXVzZXItaWQiLCJ2YWx1ZSI6W3siYWN0aXZlIjoibm9ybWFsIiwiZm9yYmlkVHlwZSI6ImFsbCIsImlkIjoxLCJtb2RlIjoiYXJlYSIsIm5hbWUiOiJmb3JiaWQxIiwidGFnIjoiM2UrMzMrMzIrMnQrMWMiLCJ2ZXJ0ZXhzIjpbWzEwMDAsMTAwMF0sWzEwMDAsMjAwMF0sWzIwMDAsMjAwMF0sWzIwMDAsMTAwMF1dfV19LCJpbmZvVHlwZSI6MjEwMDQsIm1lc3NhZ2UiOiJvayJ9",
     "decoded": {
-      "infoType": 21004,
+      "dInfo": {
+        "ts": "1600000000000",
+        "userId": "example-user-id"
+      },
       "data": {
-        "mapId": 1000000001,
         "autoAreaValue": [
-          {"id": 1, "name": "Room1", "pos": [-4000, 1000], "cleanType": "sweepOnly", "workNoisy": "auto", "cleanOrder": 0, "active": true},
-          {"id": 2, "name": "2a+33+33+31+1f", "cleanOrder": 0, "active": true}
+          {
+            "active": "normal",
+            "cleanOrder": 0,
+            "cleanType": "sweepOnly",
+            "id": 1,
+            "mode": "autolayer",
+            "name": "2b+6r+38+2p+32+33",
+            "tag": "0",
+            "vertexs": [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ]
+            ]
+          },
+          {
+            "active": "normal",
+            "cleanOrder": 0,
+            "cleanType": "sweepOnly",
+            "id": 2,
+            "mode": "autolayer",
+            "name": "25+33+32+38+2p+6p+2p",
+            "tag": "1",
+            "vertexs": [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ]
+            ]
+          },
+          {
+            "active": "normal",
+            "cleanOrder": 0,
+            "cleanType": "sweepOnly",
+            "id": 3,
+            "mode": "autolayer",
+            "name": "20+2p+30+30",
+            "tag": "2",
+            "vertexs": [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ]
+            ]
+          },
+          {
+            "active": "normal",
+            "cleanOrder": 0,
+            "cleanType": "sweepOnly",
+            "id": 4,
+            "mode": "autolayer",
+            "name": "2b+38+39+2s+2x+33",
+            "tag": "3",
+            "vertexs": [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ]
+            ]
+          },
+          {
+            "active": "normal",
+            "cleanOrder": 0,
+            "cleanType": "sweepOnly",
+            "id": 5,
+            "mode": "autolayer",
+            "name": "Room5",
+            "tag": "4",
+            "vertexs": [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ]
+            ]
+          },
+          {
+            "active": "normal",
+            "cleanOrder": 0,
+            "cleanType": "sweepOnly",
+            "id": 6,
+            "mode": "autolayer",
+            "name": "1z+2p+36+2p+2v+2t",
+            "tag": "5",
+            "vertexs": [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ]
+            ]
+          }
         ],
+        "mapId": 1000000001,
+        "sn": "EXAMPLE-SN-0001",
+        "userId": "example-user-id",
         "value": [
-          {"mode": "area", "tag": "36+33+33+31+1c", "points": [[0, 0], [1000, 0], [1000, 1000], [0, 1000]]}
+          {
+            "active": "normal",
+            "forbidType": "all",
+            "id": 1,
+            "mode": "area",
+            "name": "forbid1",
+            "tag": "3e+33+32+2t+1c",
+            "vertexs": [
+              [
+                1000,
+                1000
+              ],
+              [
+                1000,
+                2000
+              ],
+              [
+                2000,
+                2000
+              ],
+              [
+                2000,
+                1000
+              ]
+            ]
+          }
         ]
-      }
+      },
+      "infoType": 21004,
+      "message": "ok"
     }
   },
   {
-    "name": "room_command_reconstructed",
-    "source": "RECONSTRUCTED from notes, values made up, nesting unconfirmed: replace in phase 0",
+    "name": "room_command_one_room",
+    "source": "SYNTHETIC: same structure as a real Rowenta capture (2026-11-04), every value made up",
     "dp": "127",
+    "b64": "eyJkSW5mbyI6eyJ0cyI6IjE2MDAwMDAwMDAwMDAiLCJ1c2VySWQiOiJleGFtcGxlLXVzZXItaWQifSwiZGF0YSI6eyJjbWRzIjpbeyJkYXRhIjp7ImNsZWFuSWQiOlstM10sImV4dHJhQXJlYXMiOltdLCJtYXBJZCI6MTAwMDAwMDAwMSwic2VnbWVudElkIjpbM119LCJpbmZvVHlwZSI6MjEwMjN9LHsiZGF0YSI6eyJtb2RlIjoicmVBcHBvaW50Q2xlYW4ifSwiaW5mb1R5cGUiOjIxMDA1fV0sIm1haW5DbWRzIjpbMjEwMDVdfSwiaW5mb1R5cGUiOjMwMDAwLCJtZXNzYWdlIjoib2sifQ==",
     "decoded": {
+      "dInfo": {
+        "ts": "1600000000000",
+        "userId": "example-user-id"
+      },
+      "data": {
+        "cmds": [
+          {
+            "data": {
+              "cleanId": [
+                -3
+              ],
+              "extraAreas": [],
+              "mapId": 1000000001,
+              "segmentId": [
+                3
+              ]
+            },
+            "infoType": 21023
+          },
+          {
+            "data": {
+              "mode": "reAppointClean"
+            },
+            "infoType": 21005
+          }
+        ],
+        "mainCmds": [
+          21005
+        ]
+      },
       "infoType": 30000,
-      "cmds": [
-        {"infoType": 21023, "data": {"segmentId": [2, 7], "mapId": 1000000001, "cleanId": [-3], "extraAreas": []}},
-        {"infoType": 21005, "data": {"mode": "reAppointClean"}}
-      ],
-      "mainCmds": [21005]
+      "message": "ok"
+    }
+  },
+  {
+    "name": "room_command_two_rooms",
+    "source": "SYNTHETIC: same structure as a real Rowenta capture (2026-11-04), every value made up",
+    "dp": "127",
+    "b64": "eyJkSW5mbyI6eyJ0cyI6IjE2MDAwMDAwMDAwMDAiLCJ1c2VySWQiOiJleGFtcGxlLXVzZXItaWQifSwiZGF0YSI6eyJjbWRzIjpbeyJkYXRhIjp7ImNsZWFuSWQiOlstM10sImV4dHJhQXJlYXMiOltdLCJtYXBJZCI6MTAwMDAwMDAwMSwic2VnbWVudElkIjpbMiw1XX0sImluZm9UeXBlIjoyMTAyM30seyJkYXRhIjp7Im1vZGUiOiJyZUFwcG9pbnRDbGVhbiJ9LCJpbmZvVHlwZSI6MjEwMDV9XSwibWFpbkNtZHMiOlsyMTAwNV19LCJpbmZvVHlwZSI6MzAwMDAsIm1lc3NhZ2UiOiJvayJ9",
+    "decoded": {
+      "dInfo": {
+        "ts": "1600000000000",
+        "userId": "example-user-id"
+      },
+      "data": {
+        "cmds": [
+          {
+            "data": {
+              "cleanId": [
+                -3
+              ],
+              "extraAreas": [],
+              "mapId": 1000000001,
+              "segmentId": [
+                2,
+                5
+              ]
+            },
+            "infoType": 21023
+          },
+          {
+            "data": {
+              "mode": "reAppointClean"
+            },
+            "infoType": 21005
+          }
+        ],
+        "mainCmds": [
+          21005
+        ]
+      },
+      "infoType": 30000,
+      "message": "ok"
+    }
+  },
+  {
+    "name": "path_resend_previous_run",
+    "source": "SYNTHETIC: same structure as a real Rowenta capture (2026-11-04), every value made up",
+    "dp": "123",
+    "b64": "eyJkYXRhIjp7InBhdGhJRCI6MTU5OTk5MDAwMCwicG9pbnRDb3VudHMiOjEyLCJwb3NBcnJheSI6W1stMzAsOTBdLFsyNiw4Ml0sWzgyLDc0XSxbMTM4LDY2XSxbMTk0LDU4XSxbMjUwLDUwXSxbMzA2LDQyXSxbMzYyLDM0XSxbNDE4LDI2XSxbNDc0LDE4XSxbNTMwLDEwXSxbNTg2LDJdXSwic3RhcnRQb3MiOjAsInRvdGFsUG9pbnRzIjoxMn0sImluZm9UeXBlIjoyMTAxMSwibWVzc2FnZSI6Im9rIiwidHMiOjE2MDAwMDMwMDB9",
+    "decoded": {
+      "data": {
+        "pathID": 1599990000,
+        "pointCounts": 12,
+        "posArray": [
+          [
+            -30,
+            90
+          ],
+          [
+            26,
+            82
+          ],
+          [
+            82,
+            74
+          ],
+          [
+            138,
+            66
+          ],
+          [
+            194,
+            58
+          ],
+          [
+            250,
+            50
+          ],
+          [
+            306,
+            42
+          ],
+          [
+            362,
+            34
+          ],
+          [
+            418,
+            26
+          ],
+          [
+            474,
+            18
+          ],
+          [
+            530,
+            10
+          ],
+          [
+            586,
+            2
+          ]
+        ],
+        "startPos": 0,
+        "totalPoints": 12
+      },
+      "infoType": 21011,
+      "message": "ok",
+      "ts": 1600003000
+    }
+  },
+  {
+    "name": "path_live_0",
+    "source": "SYNTHETIC: same structure as a real Rowenta capture (2026-11-04), every value made up",
+    "dp": "123",
+    "b64": "eyJkYXRhIjp7InBhdGhJRCI6MTYwMDAwMzYwMCwicG9pbnRDb3VudHMiOjAsInBvc0FycmF5IjpbXSwic3RhcnRQb3MiOjAsInRvdGFsUG9pbnRzIjowfSwiaW5mb1R5cGUiOjIxMDExLCJtZXNzYWdlIjoib2siLCJ0cyI6MTYwMDAwMzYwMH0=",
+    "decoded": {
+      "data": {
+        "pathID": 1600003600,
+        "pointCounts": 0,
+        "posArray": [],
+        "startPos": 0,
+        "totalPoints": 0
+      },
+      "infoType": 21011,
+      "message": "ok",
+      "ts": 1600003600
+    }
+  },
+  {
+    "name": "path_live_1",
+    "source": "SYNTHETIC: same structure as a real Rowenta capture (2026-11-04), every value made up",
+    "dp": "123",
+    "b64": "eyJkYXRhIjp7InBhdGhJRCI6MTYwMDAwMzYwMCwicG9pbnRDb3VudHMiOjEsInBvc0FycmF5IjpbWzQwLDEwXV0sInN0YXJ0UG9zIjowLCJ0b3RhbFBvaW50cyI6MX0sImluZm9UeXBlIjoyMTAxMSwibWVzc2FnZSI6Im9rIiwidHMiOjE2MDAwMDM2MDF9",
+    "decoded": {
+      "data": {
+        "pathID": 1600003600,
+        "pointCounts": 1,
+        "posArray": [
+          [
+            40,
+            10
+          ]
+        ],
+        "startPos": 0,
+        "totalPoints": 1
+      },
+      "infoType": 21011,
+      "message": "ok",
+      "ts": 1600003601
+    }
+  },
+  {
+    "name": "path_live_2",
+    "source": "SYNTHETIC: same structure as a real Rowenta capture (2026-11-04), every value made up",
+    "dp": "123",
+    "b64": "eyJkYXRhIjp7InBhdGhJRCI6MTYwMDAwMzYwMCwicG9pbnRDb3VudHMiOjEsInBvc0FycmF5IjpbWzk2LDEwXV0sInN0YXJ0UG9zIjoxLCJ0b3RhbFBvaW50cyI6Mn0sImluZm9UeXBlIjoyMTAxMSwibWVzc2FnZSI6Im9rIiwidHMiOjE2MDAwMDM2MDJ9",
+    "decoded": {
+      "data": {
+        "pathID": 1600003600,
+        "pointCounts": 1,
+        "posArray": [
+          [
+            96,
+            10
+          ]
+        ],
+        "startPos": 1,
+        "totalPoints": 2
+      },
+      "infoType": 21011,
+      "message": "ok",
+      "ts": 1600003602
+    }
+  },
+  {
+    "name": "path_live_3",
+    "source": "SYNTHETIC: same structure as a real Rowenta capture (2026-11-04), every value made up",
+    "dp": "123",
+    "b64": "eyJkYXRhIjp7InBhdGhJRCI6MTYwMDAwMzYwMCwicG9pbnRDb3VudHMiOjMsInBvc0FycmF5IjpbWzQwLDEwXSxbOTYsMTBdLFsxNTIsMTBdXSwic3RhcnRQb3MiOjAsInRvdGFsUG9pbnRzIjozfSwiaW5mb1R5cGUiOjIxMDExLCJtZXNzYWdlIjoib2siLCJ0cyI6MTYwMDAwMzYwM30=",
+    "decoded": {
+      "data": {
+        "pathID": 1600003600,
+        "pointCounts": 3,
+        "posArray": [
+          [
+            40,
+            10
+          ],
+          [
+            96,
+            10
+          ],
+          [
+            152,
+            10
+          ]
+        ],
+        "startPos": 0,
+        "totalPoints": 3
+      },
+      "infoType": 21011,
+      "message": "ok",
+      "ts": 1600003603
+    }
+  },
+  {
+    "name": "path_live_4",
+    "source": "SYNTHETIC: same structure as a real Rowenta capture (2026-11-04), every value made up",
+    "dp": "123",
+    "b64": "eyJkYXRhIjp7InBhdGhJRCI6MTYwMDAwMzYwMCwicG9pbnRDb3VudHMiOjQsInBvc0FycmF5IjpbWzIwOCwxMF0sWzI2NCwxMF0sWzMyMCwxMF0sWzM3NiwxMF1dLCJzdGFydFBvcyI6MywidG90YWxQb2ludHMiOjd9LCJpbmZvVHlwZSI6MjEwMTEsIm1lc3NhZ2UiOiJvayIsInRzIjoxNjAwMDAzNjA0fQ==",
+    "decoded": {
+      "data": {
+        "pathID": 1600003600,
+        "pointCounts": 4,
+        "posArray": [
+          [
+            208,
+            10
+          ],
+          [
+            264,
+            10
+          ],
+          [
+            320,
+            10
+          ],
+          [
+            376,
+            10
+          ]
+        ],
+        "startPos": 3,
+        "totalPoints": 7
+      },
+      "infoType": 21011,
+      "message": "ok",
+      "ts": 1600003604
+    }
+  },
+  {
+    "name": "path_live_5",
+    "source": "SYNTHETIC: same structure as a real Rowenta capture (2026-11-04), every value made up",
+    "dp": "123",
+    "b64": "eyJkYXRhIjp7InBhdGhJRCI6MTYwMDAwMzYwMCwicG9pbnRDb3VudHMiOjIsInBvc0FycmF5IjpbWzM3NiwxMF0sWzQzMiwxMF1dLCJzdGFydFBvcyI6NiwidG90YWxQb2ludHMiOjh9LCJpbmZvVHlwZSI6MjEwMTEsIm1lc3NhZ2UiOiJvayIsInRzIjoxNjAwMDAzNjA1fQ==",
+    "decoded": {
+      "data": {
+        "pathID": 1600003600,
+        "pointCounts": 2,
+        "posArray": [
+          [
+            376,
+            10
+          ],
+          [
+            432,
+            10
+          ]
+        ],
+        "startPos": 6,
+        "totalPoints": 8
+      },
+      "infoType": 21011,
+      "message": "ok",
+      "ts": 1600003605
+    }
+  },
+  {
+    "name": "path_live_6",
+    "source": "SYNTHETIC: same structure as a real Rowenta capture (2026-11-04), every value made up",
+    "dp": "123",
+    "b64": "eyJkYXRhIjp7InBhdGhJRCI6MTYwMDAwMzYwMCwicG9pbnRDb3VudHMiOjEsInBvc0FycmF5IjpbWzQzMiwxMF1dLCJzdGFydFBvcyI6NywidG90YWxQb2ludHMiOjh9LCJpbmZvVHlwZSI6MjEwMTEsIm1lc3NhZ2UiOiJvayIsInRzIjoxNjAwMDAzNjA2fQ==",
+    "decoded": {
+      "data": {
+        "pathID": 1600003600,
+        "pointCounts": 1,
+        "posArray": [
+          [
+            432,
+            10
+          ]
+        ],
+        "startPos": 7,
+        "totalPoints": 8
+      },
+      "infoType": 21011,
+      "message": "ok",
+      "ts": 1600003606
+    }
+  },
+  {
+    "name": "path_live_7",
+    "source": "SYNTHETIC: same structure as a real Rowenta capture (2026-11-04), every value made up",
+    "dp": "123",
+    "b64": "eyJkYXRhIjp7InBhdGhJRCI6MTYwMDAwMzYwMCwicG9pbnRDb3VudHMiOjUsInBvc0FycmF5IjpbWzQzMiw2Nl0sWzQzMiwxMjJdLFs0MzIsMTc4XSxbNDMyLDIzNF0sWzM3NiwyMzRdXSwic3RhcnRQb3MiOjgsInRvdGFsUG9pbnRzIjoxM30sImluZm9UeXBlIjoyMTAxMSwibWVzc2FnZSI6Im9rIiwidHMiOjE2MDAwMDM2MDd9",
+    "decoded": {
+      "data": {
+        "pathID": 1600003600,
+        "pointCounts": 5,
+        "posArray": [
+          [
+            432,
+            66
+          ],
+          [
+            432,
+            122
+          ],
+          [
+            432,
+            178
+          ],
+          [
+            432,
+            234
+          ],
+          [
+            376,
+            234
+          ]
+        ],
+        "startPos": 8,
+        "totalPoints": 13
+      },
+      "infoType": 21011,
+      "message": "ok",
+      "ts": 1600003607
+    }
+  },
+  {
+    "name": "path_live_8",
+    "source": "SYNTHETIC: same structure as a real Rowenta capture (2026-11-04), every value made up",
+    "dp": "123",
+    "b64": "eyJkYXRhIjp7InBhdGhJRCI6MTYwMDAwMzYwMCwicG9pbnRDb3VudHMiOjgsInBvc0FycmF5IjpbWzM3NiwyMzRdLFszMjAsMjM0XSxbMjY0LDIzNF0sWzIwOCwyMzRdLFsxNTIsMjM0XSxbOTYsMjM0XSxbNDAsMjM0XSxbLTE2LDIzNF1dLCJzdGFydFBvcyI6MTIsInRvdGFsUG9pbnRzIjoyMH0sImluZm9UeXBlIjoyMTAxMSwibWVzc2FnZSI6Im9rIiwidHMiOjE2MDAwMDM2MDh9",
+    "decoded": {
+      "data": {
+        "pathID": 1600003600,
+        "pointCounts": 8,
+        "posArray": [
+          [
+            376,
+            234
+          ],
+          [
+            320,
+            234
+          ],
+          [
+            264,
+            234
+          ],
+          [
+            208,
+            234
+          ],
+          [
+            152,
+            234
+          ],
+          [
+            96,
+            234
+          ],
+          [
+            40,
+            234
+          ],
+          [
+            -16,
+            234
+          ]
+        ],
+        "startPos": 12,
+        "totalPoints": 20
+      },
+      "infoType": 21011,
+      "message": "ok",
+      "ts": 1600003608
+    }
+  },
+  {
+    "name": "path_live_9",
+    "source": "SYNTHETIC: same structure as a real Rowenta capture (2026-11-04), every value made up",
+    "dp": "123",
+    "b64": "eyJkYXRhIjp7InBhdGhJRCI6MTYwMDAwMzYwMCwicG9pbnRDb3VudHMiOjEwLCJwb3NBcnJheSI6W1s0MzIsMTc4XSxbNDMyLDIzNF0sWzM3NiwyMzRdLFszMjAsMjM0XSxbMjY0LDIzNF0sWzIwOCwyMzRdLFsxNTIsMjM0XSxbOTYsMjM0XSxbNDAsMjM0XSxbLTE2LDIzNF1dLCJzdGFydFBvcyI6MTAsInRvdGFsUG9pbnRzIjoyMH0sImluZm9UeXBlIjoyMTAxMSwibWVzc2FnZSI6Im9rIiwidHMiOjE2MDAwMDM2MDl9",
+    "decoded": {
+      "data": {
+        "pathID": 1600003600,
+        "pointCounts": 10,
+        "posArray": [
+          [
+            432,
+            178
+          ],
+          [
+            432,
+            234
+          ],
+          [
+            376,
+            234
+          ],
+          [
+            320,
+            234
+          ],
+          [
+            264,
+            234
+          ],
+          [
+            208,
+            234
+          ],
+          [
+            152,
+            234
+          ],
+          [
+            96,
+            234
+          ],
+          [
+            40,
+            234
+          ],
+          [
+            -16,
+            234
+          ]
+        ],
+        "startPos": 10,
+        "totalPoints": 20
+      },
+      "infoType": 21011,
+      "message": "ok",
+      "ts": 1600003609
     }
   }
 ]

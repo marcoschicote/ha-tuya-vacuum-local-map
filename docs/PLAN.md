@@ -45,28 +45,29 @@ tests/
   test_*.py
 ```
 
-## Phase 0: confirm the formats (needs the owner)
+## Phase 0: confirm the formats (done)
 
-The raw Rowenta captures weren't kept, so several shapes in PROTOCOL.md are only described. Do this before writing the decoder.
+**Captured 2026-11-04** with `tools/capture.py`: 12 minutes, 1346 messages, covering the map screen opened while docked, a one-room clean from the app, the whole run, the return to the dock, and the map screen again. The formats are now **[Seen]** in `docs/PROTOCOL.md`. The raw capture stays on the owner's machine (git-ignored); `tests/fixtures/frames.json` has synthetic frames with the same structure and made-up values.
 
-**Ask the owner** to run `tools/capture.py 12`, since it needs the local key and the app. It's read-only. Twelve minutes is enough: we only need the shape of each message and a few examples, not a full dataset. The owner does three things in the app:
+What the capture settled, and what it changed in this plan:
 
-1. Open the map screen while the vacuum is docked, for the room list.
-2. Start a clean of one room, let it run for about two minutes, then send it back to the dock. This gives the path chunks and the room command.
-3. Open the map screen again, to see how the last run is re-sent.
+- **Rooms have no label position and no outlines.** Each room in the 21004 list has an `id` and an encoded `name`; its `vertexs` are all `[0, 0]`, and `pos` isn't there. So `Room` has no `pos`, phase 2 draws no room labels, and outlines and labels wait for phase 5.
+- **The room command nests under `data`.** `data.cmds[0].data.segmentId` holds the room IDs (`infoType` 21023).
+- **Names are Unicode code points in base 36**, confirmed with `ñ` and `ó`.
+- **`pathID` is the run's start time** (Unix seconds), equal to the first chunk's `ts`.
+- **Opening the map screen re-sends the previous run whole**, as one chunk with its own `pathID`. If we haven't recorded that run, it's a complete run and can be added (phase 2).
+- **Runs start with empty chunks** (`pointCounts` 0).
+- **Chunks overlap, with identical points** (337 re-sent points, none differing), so index by position. No gaps occurred in the live run.
+- **Largest frame was about 2.8 KB** in this 10-minute run, well inside the 65536 limit set in `connection.py`.
+- **Private fields** in the room list and command: `dInfo.userId`, `data.userId`, `data.sn`, `data.mapId`. See the privacy rule in `PROTOCOL.md`.
+- Unit guess (mm) and the origin (the dock) are still guesses, to be settled by phase 5's calibration.
 
-Optional, one minute: rename a room using an accented character such as `ñ`, to check the name encoding. A two-room clean isn't needed: its command has the same shape with more IDs in `segmentId`.
+**Decided by the owner (2026-11-04):**
 
-- Answer these and update the labels in PROTOCOL.md:
-  - Is `autoAreaValue` under `data`? What shape is `pos`?
-  - Is `cmds` under `data` in 30000?
-  - What are the field names of the rectangles in `value`?
-  - Do encoded names use Unicode code points?
-  - Does the last-run re-send use the same `pathID` as the original run?
-- Add anonymised fixtures to `tests/fixtures/frames.json`. **This repo is going public with its history, so this step is the one to get right.** Replace `mapId` and names. Don't just shift and scale coordinates, since the home's layout stays recognisable: keep the structure and sizes, but generate the points (a made-up room shape walked in lines). Show the owner the result and run `tools/check_private.py` before committing.
-- **Spike the image format.** In a throwaway custom integration on a test HA, return an SVG from an `ImageEntity` (`_attr_content_type = "image/svg+xml"`) and check it displays in a picture-entity card, in the app as well as the browser. If it doesn't, use PNG via Pillow in `render.py` and update this plan.
+- **The map is an SVG.** Check early in phase 4 that an `ImageEntity` returning `image/svg+xml` displays in a picture-entity card, in the app as well as the browser. If it doesn't, switch `render.py` to PNG via Pillow and update this plan.
+- **Accented-name rename and two-room clean weren't captured, on purpose.** The names in the capture already had non-ASCII characters, and a two-room command differs only in having more IDs.
 
-**Done when:** every question above is answered and the spike has a result.
+**Done:** the fixtures were reviewed by the owner and committed. Start at phase 1.
 
 ## Phase 1: decode messages (`core/protocol.py`)
 
@@ -90,15 +91,16 @@ class PathChunk:
 @dataclass(frozen=True)
 class Room:
     id: int
-    name: str
-    pos: tuple[int, int] | None
+    name: str  # already decoded
 
 
 def decode_dp(dp: str, value: object) -> Frame | None: ...
 def parse_path(frame: Frame) -> PathChunk | None: ...
 def parse_rooms(frame: Frame) -> tuple[int, list[Room]] | None:  # (map_id, rooms)
-    ...
-def parse_room_command(frame: Frame) -> list[int] | None: ...  # segment IDs
+    ...  # rooms come from data.autoAreaValue; data.value (no-go areas) is not rooms
+def parse_room_command(
+    frame: Frame,
+) -> list[int] | None: ...  # data.cmds[].data.segmentId
 def decode_name(name: str) -> str: ...
 ```
 
@@ -106,9 +108,12 @@ Rules:
 
 - **Never raise on device data.** Anything malformed returns `None`. The vacuum's firmware is outside our control, and a bad message must not kill the connection, which is exactly the bug in #900.
 - A non-string DP value returns `None` straight away. A value too short or not base64 returns `None` without logging.
-- Allow extra fields, and missing `message` and `ts`.
+- Allow extra fields, and missing `message`, `ts` and `dInfo`. Read only what's needed: never copy `userId`, `sn` or `dInfo` into a `Frame`, an entity, a log line or diagnostics (PROTOCOL, "Recognising a frame").
+- Empty chunks (`pointCounts` 0) are valid.
 
 **Tests:** every fixture; the real Nova frame in `fixtures/frames.json`; the name table in PROTOCOL.md; garbage input (not base64, base64 of non-JSON, JSON list, missing fields, wrong types, non-integer points).
+
+Also a test over `captures/messages.jsonl` when that file exists (the owner's real capture, git-ignored; skip the test when it's missing, as CI has none). It checks the decoder against real data: nothing raises, the counts per `infoType` are non-zero, every path chunk is indexed consistently. It must print nothing from the file.
 
 **Done when:** those pass with no HA installed, including the test that fails if `core/` imports `homeassistant`.
 
@@ -124,14 +129,15 @@ class RunAssembler:
     def segments(self) -> list[list[tuple[int, int]]]: ...
 ```
 
-- Store points by index (`dict[int, point]`), because chunks repeat and overlap. `points[chunk.start + i] = p`.
+- Store points by index (`dict[int, point]`), because chunks repeat and overlap. `points[chunk.start + i] = p`. In the capture every re-sent point was identical, but keep the latest anyway.
+- `path_id` is the run's start time in Unix seconds, so keep it as the run's `started`.
 - A different `path_id` starts a new run. The caller finishes the old one first (see below).
 - `segments()` splits the path where indexes are missing, since chunks are lost if the connection drops, and where consecutive points jump more than `MAX_JUMP` (1500 units). Never draw a line across a gap: it'd paint coverage through a wall.
 - Ignore points whose index is far beyond `total`, as a sanity limit.
 
 **When a run ends:** a new `pathID` arrives, or no new point has arrived for 120 s. Don't rely on state DPs, which differ by model. An idle gap is safe: if chunks resume with the same `pathID`, reopen the run, and let the grid handle it (next section).
 
-**Re-sent runs:** a re-send of a finished run must not count as a second cleaning. Keep the IDs of the last 50 finished runs (persisted), and ignore chunks for those, except to add points that weren't received before.
+**Re-sent runs:** opening the app's map screen re-sends the previous run whole, as one chunk. A re-send of a run we already recorded must not count as a second cleaning: keep the IDs of the last 50 finished runs (persisted), and ignore chunks for those, except to add points that weren't received before. But if its `pathID` is unknown, it's a complete run we missed (the integration was down, or the connection dropped): record it as a run of its own.
 
 ### `grid.py`
 
@@ -174,8 +180,8 @@ def render_svg(data: RenderInput) -> bytes: ...
   <path fill="#4a90d9" fill-opacity=".35" d="M100 200h450v50h-450zM100 250h600v50h-600z"/>
   ```
 
-- Then the last run as a thin `<polyline>` per segment, room labels at `pos` when known, and the position as a small circle.
-- Skip rooms in `hidden_rooms`. Some detected rooms are places the vacuum never goes, like a balcony.
+- Then the last run as a thin `<polyline>` per segment and the position as a small circle. No room labels yet: the room list has no positions. Phase 5 adds them from the learned outlines.
+- Skip rooms in `hidden_rooms` once labels exist. Some detected rooms are places the vacuum never goes, like a balcony.
 - **Escape room names with `xml.sax.saxutils.escape`.** They come from the network.
 - Keep colours readable on both light and dark dashboards: transparent background, and labels with a contrasting outline (`paint-order: stroke`).
 - With no data, return a valid small SVG saying that no runs are recorded yet.
@@ -243,6 +249,8 @@ Options flow: hidden rooms, brush width (default 300), units per metre (default 
 
 ## Phase 4: entities and storage (`coordinator.py`, entities)
 
+**First, check the image format** (see phase 0): SVG in a picture-entity card, in the app and the browser, before building the rest on it.
+
 **Coordinator.** Takes each decoded frame and routes it: path chunks to `RunAssembler`, room lists merged per room ID, room commands kept for the current run. Finishes runs, and resets the grid when `mapId` changes.
 
 **Rate limits, which matter at 4 messages a second:**
@@ -257,7 +265,7 @@ Options flow: hidden rooms, brush width (default 300), units per metre (default 
 
 | Entity | State | Notes |
 |---|---|---|
-| `image` Coverage map | Image, updated timestamp | SVG, or whatever the spike chose |
+| `image` Coverage map | Image, updated timestamp | SVG (PNG if the check above fails) |
 | `sensor` Rooms | Number of rooms | Attribute `rooms`: list of ID and name. For building room buttons later |
 | `sensor` Run points | Points in the current or last run | Attributes `path_id`, `started` |
 | `sensor` Covered area | m², from cells and units per metre | Diagnostics category |
@@ -275,7 +283,7 @@ Options flow: hidden rooms, brush width (default 300), units per metre (default 
 ## Phase 5: better labels and accuracy
 
 1. **Calibration check.** Compare covered area with what the vacuum reports for a run (`cur_clean_area` on the Rowenta, `cleanArea` in 20001). Report the ratio in diagnostics. Only then decide whether units are really mm. If a device's scale differs, the units-per-metre option handles it. Coverage will read a bit higher than reported, since the brush estimate isn't exact: expect agreement within about 25%, not exactness.
-2. **Room outlines.** A run started with `segmentId: [7]` only covers room 7, so its cells can be attributed to that room. A multi-room run only tells us the union, so use single-room runs first, and subtract already-known rooms for multi-room ones. Store this as a cell → room layer, drawn as a boundary or tint. Rooms the vacuum never cleaned alone stay unknown.
+2. **Room outlines.** A run started with `segmentId: [7]` only covers room 7, so its cells can be attributed to that room. A multi-room run only tells us the union, so use single-room runs first, and subtract already-known rooms for multi-room ones. Store this as a cell → room layer, drawn as a boundary or tint, and put each room's label at the centre of its cells. The room list gives names and IDs but no positions or shapes, so this is the only source of both. Rooms the vacuum never cleaned alone stay unknown, and unlabelled.
 3. **Current room sensor**, from those outlines, falling back to `unknown`. The nearest label is too rough near boundaries, so don't use that.
 4. **Live position** on the image, from the latest point, at the same 30 s render rate. A faster overlay would need a custom card, which is out of scope here.
 
@@ -303,6 +311,6 @@ Options flow: hidden rooms, brush width (default 300), units per metre (default 
 | Other models don't accept a second connection | Clear repair issue explaining it, then the localtuya event source above |
 | Another integration updates tinytuya past our range | Range upper bound is `<2`, so only a major version conflicts. Watch for it |
 | Firmware changes the message format | Decoder never raises, and diagnostics show unknown types |
-| SVG doesn't display everywhere | Decided by the phase 0 spike; PNG is the fallback |
+| SVG doesn't display everywhere | Checked first thing in phase 4; PNG is the fallback |
 | Room IDs change on a remap | `mapId` change resets the data |
 | `mapId` changes without a real remap, and wipes coverage | Keep the previous grid for one generation in storage, so it can be restored by hand |
