@@ -4,7 +4,7 @@ import threading
 import time
 
 KEY = "0123456789abcdef"
-DEVICE_ID = "bf0000000000000000xyz"  # made up
+DEVICE_ID = "example-device-id"  # made up
 HOST = "203.0.113.7"  # a documentation address
 
 
