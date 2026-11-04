@@ -30,7 +30,16 @@ for _module in (const, message_helper):
     _module.MAX_PAYLOAD_LENGTH = max(_module.MAX_PAYLOAD_LENGTH, MAX_PAYLOAD_LENGTH)
 
 HEARTBEAT_SECONDS = 8
+# Connecting and the first status can take a moment. After that, an idle `receive()`
+# blocks for this long before it returns None, which is also how often the thread
+# looks at its stop flag and the heartbeat timer: heartbeats go out within about this
+# much of the interval, and stopping takes about this long.
 SOCKET_TIMEOUT = 5
+RECEIVE_TIMEOUT = 2
+# tinytuya retries a failed connection 5 times, 5 s apart: 20 s to find out that a host
+# is wrong. Two tries, a second apart, is enough: our own backoff does the waiting.
+RETRY_LIMIT = 2
+RETRY_DELAY = 1
 BACKOFF_START = 5
 BACKOFF_MAX = 60
 STALLED_AFTER = 600  # seconds without a connection before `on_stalled(True)`
@@ -45,7 +54,15 @@ _BAD_KEY_CODES = frozenset({_ERR_PAYLOAD, _ERR_KEY_OR_VERSION})
 
 # The only methods that may be called on the device.
 _ALLOWED = frozenset(
-    {"status", "heartbeat", "receive", "set_socketTimeout", "close"},
+    {
+        "status",
+        "heartbeat",
+        "receive",
+        "set_socketTimeout",
+        "set_socketRetryLimit",
+        "set_socketRetryDelay",
+        "close",
+    },
 )
 
 
@@ -89,6 +106,12 @@ def _tinytuya_device(
     return tinytuya.Device(device_id, host, key, version=version, persist=persist)
 
 
+def _configure(device: ReadOnlyDevice) -> None:
+    device.set_socketTimeout(SOCKET_TIMEOUT)
+    device.set_socketRetryLimit(RETRY_LIMIT)
+    device.set_socketRetryDelay(RETRY_DELAY)
+
+
 def check_reply(message: Any) -> None:
     """Raise if a reply from tinytuya is an error dict. `None` and data are fine."""
     if isinstance(message, dict) and "Err" in message:
@@ -110,7 +133,7 @@ def probe(
     factory = device_factory or _tinytuya_device  # looked up now, so tests can patch it
     device = ReadOnlyDevice(factory(device_id, host, key, version, False))
     try:
-        device.set_socketTimeout(SOCKET_TIMEOUT)
+        _configure(device)
         reply = device.status()
     except DeviceError:
         raise
@@ -155,6 +178,7 @@ class DeviceConnection:
         # Module constants are read here, not at import, so tests can change them.
         self._factory = device_factory or _tinytuya_device
         self._heartbeat = heartbeat_seconds or HEARTBEAT_SECONDS
+        self._receive_timeout = RECEIVE_TIMEOUT
         self._backoff_start = backoff_start or BACKOFF_START
         self._backoff_max = backoff_max or BACKOFF_MAX
         self._stalled_after = stalled_after or STALLED_AFTER
@@ -180,14 +204,12 @@ class DeviceConnection:
         self._thread.start()
 
     def stop(self) -> None:
-        """Stop and wait for the thread. Blocking: run it in an executor."""
+        """Stop and wait for the thread. Blocking: run it in an executor.
+
+        The thread notices within RECEIVE_TIMEOUT and closes the socket itself.
+        Closing it from here would only make tinytuya reconnect.
+        """
         self._stop.set()
-        device = self._device
-        if device is not None:
-            try:
-                device.close()  # wakes a blocked read, so we needn't wait the timeout
-            except Exception:  # noqa: BLE001
-                pass
         if self._thread is not None:
             self._thread.join(JOIN_TIMEOUT)
             if self._thread.is_alive():
@@ -248,7 +270,7 @@ class DeviceConnection:
         device = ReadOnlyDevice(self._factory(*self._args, True))
         self._device = device
         try:
-            device.set_socketTimeout(SOCKET_TIMEOUT)
+            _configure(device)
             first = device.status()
             if first is None:
                 raise Unreachable()
@@ -256,6 +278,7 @@ class DeviceConnection:
             if self._stalled:
                 self._stalled = False
                 self._call(self._on_stalled, False)
+            device.set_socketTimeout(self._receive_timeout)
             self._set_connected(True)
             self._deliver(first)
             last_beat = self._clock()

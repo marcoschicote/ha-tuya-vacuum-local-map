@@ -211,7 +211,14 @@ async def test_only_reading_calls_are_made_through_setup(hass, factory):
         wait_for, lambda: "heartbeat" in factory.made[0].calls
     )
     await hass.config_entries.async_unload(entry.entry_id)
-    allowed = {"status", "receive", "heartbeat", "set_socketTimeout"}
+    allowed = {
+        "status",
+        "receive",
+        "heartbeat",
+        "set_socketTimeout",
+        "set_socketRetryLimit",
+        "set_socketRetryDelay",
+    }
     assert set(factory.made[0].calls) <= allowed
 
 

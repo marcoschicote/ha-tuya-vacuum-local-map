@@ -1,6 +1,5 @@
 """Helpers shared by the Home Assistant tests."""
 
-import base64
 import json
 import pathlib
 
@@ -16,6 +15,7 @@ from custom_components.tuya_vacuum_local_map.const import (
     DOMAIN,
 )
 
+from ..fake_vacuum import chunk_dps, envelope, rooms_dps, serpentine  # noqa: F401
 from ..fakes import DEVICE_ID, HOST, KEY
 
 FRAMES = {
@@ -38,29 +38,6 @@ NS = "{http://www.w3.org/2000/svg}"
 CLOCK = [1000.0]  # the coordinator's clock in tests, set by the `clock` fixture
 
 
-def envelope(info_type, data, **extra):
-    """A DP value as the vacuum sends it: base64 of a JSON envelope."""
-    body = {"data": data, "infoType": info_type, "message": "ok", **extra}
-    return base64.b64encode(json.dumps(body).encode()).decode()
-
-
-def chunk_dps(path_id, start, points, total=None):
-    data = {
-        "pathID": path_id,
-        "pointCounts": len(points),
-        "posArray": [list(p) for p in points],
-        "startPos": start,
-        "totalPoints": start + len(points) if total is None else total,
-    }
-    return {"123": envelope(21011, data, ts=path_id)}
-
-
-def rooms_dps(map_id=1000000001, rooms=((1, "Hall"), (2, "Study"))):
-    entries = [{"id": i, "name": n, "mode": "autolayer"} for i, n in rooms]
-    data = {"autoAreaValue": entries, "mapId": map_id, "userId": "u", "sn": "s"}
-    return {"127": envelope(21004, data, dInfo={"userId": "u"})}
-
-
 def room_dps():
     return {FRAMES["room_list"]["dp"]: FRAMES["room_list"]["b64"]}
 
@@ -81,16 +58,6 @@ async def setup_entry(hass, options=None):
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
     return entry
-
-
-def serpentine(width=2000, height=1000, step=50, lane=250):
-    points, y, forward = [], 0, True
-    while y <= height:
-        xs = range(0, width + 1, step)
-        points += [(x, y) for x in (xs if forward else reversed(xs))]
-        forward = not forward
-        y += lane
-    return points
 
 
 def entity_id(hass, platform, key):

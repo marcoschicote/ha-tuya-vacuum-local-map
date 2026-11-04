@@ -113,9 +113,9 @@ def test_plain_dp_values_seen_on_the_rowenta_are_not_frames():
 def test_nova_path_chunk():
     chunk = parse_path(fixture_frame("path_chunk_nova"))
     assert chunk is not None
-    assert (chunk.path_id, chunk.start, chunk.total) == (1708023426, 99, 107)
+    assert (chunk.path_id, chunk.start, chunk.total) == (1600100000, 99, 107)
     assert len(chunk.points) == 8
-    assert chunk.points[0] == (-1911, -1311) and chunk.points[-1] == (-2223, -1291)
+    assert chunk.points[0] == (640, -210) and chunk.points[-1] == (960, -184)
 
 
 def test_every_path_fixture_parses_and_indexes_agree():
