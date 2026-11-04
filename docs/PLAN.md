@@ -321,6 +321,13 @@ Options flow: hidden rooms, brush width (default 300), units per metre (default 
 3. **Current room sensor**, from those outlines, falling back to `unknown`. The nearest label is too rough near boundaries, so don't use that.
 4. **Live position** on the image, from the latest point, at the same 30 s render rate. A faster overlay would need a custom card, which is out of scope here.
 
+**What is built (code and tests only; none of it has met a real run):**
+
+1. **Calibration.** The coordinator keeps the latest `cleanArea` from a 20001 status (`parse_status`, **[Reported]** on the Nova only) and, each time a run is counted, records the map's area for that run against it: `map_area`, `reported_area` and `ratio` (the last 5, in diagnostics). It does not read DP 108 (`cur_clean_area`): that is the Rowenta's own DP, and `core/` and the coordinator recognise frames by content, not DP number (AGENTS.md rule 5). So on the Rowenta there's no ratio until DP 108 gets a reader. Units of the reported number are still unknown, and so is whether the units are mm.
+2. **Room outlines (`core/rooms.py`, `RoomLayer`).** Each finished run gets the room command that came before it (kept for 120 s, bound to the first run that appears after it, so two commands close together go to their own runs). A one-room run gives that room's cells a vote. A multi-room run counts only when all rooms but one already have cells, and then only the cells nobody else owns go to the remaining room. A cell belongs to the room with the most votes (ties to the lower ID), so the strip a vacuum drives through other rooms to reach a room is outvoted by those rooms' own runs. This is a heuristic with no real data behind it: **check it against real runs first** (does transit leave stray strips? do ties matter?). Stored with the map, drawn as a tint per room with the name at the owned cell nearest the centre of the room (rooms under 20 cells get no label), and hidden rooms are skipped.
+3. **Current room sensor.** The learned room under the vacuum while a run is under way; `unknown` otherwise, or where nothing is learned. Hidden rooms are still named here.
+4. **Live position.** The newest point (by index) of a run that hasn't gone quiet, drawn as a dot at the 30 s render rate.
+
 **Done when:** each one is checked against a real run, or dropped from this list with a reason noted here.
 
 ## Phase 6: ready for others

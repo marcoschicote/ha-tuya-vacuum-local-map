@@ -15,6 +15,7 @@ from typing import Any
 
 INFO_PATH = 21011
 INFO_ROOMS = 21004
+INFO_STATUS = 20001
 INFO_COMMAND = 30000
 INFO_ROOM_SELECT = 21023
 
@@ -49,6 +50,11 @@ class PathChunk:
 class Room:
     id: int
     name: str  # already decoded
+
+
+@dataclass(frozen=True)
+class Status:
+    clean_area: float | None  # of the current or last run; units unconfirmed
 
 
 def _is_int(value: object) -> bool:
@@ -146,6 +152,17 @@ def parse_rooms(frame: Frame) -> tuple[int, list[Room]] | None:
         if _is_int(room_id) and isinstance(name, str):
             rooms.append(Room(id=room_id, name=decode_name(name)))
     return map_id, rooms
+
+
+def parse_status(frame: Frame) -> Status | None:
+    """The status message (20001), seen only on the Nova and only reported. Used to
+    check the map against the area the vacuum says it cleaned."""
+    if frame.info_type != INFO_STATUS:
+        return None
+    area = frame.data.get("cleanArea")
+    if isinstance(area, bool) or not isinstance(area, int | float) or area < 0:
+        return Status(clean_area=None)
+    return Status(clean_area=area)
 
 
 def parse_room_command(frame: Frame) -> list[int] | None:

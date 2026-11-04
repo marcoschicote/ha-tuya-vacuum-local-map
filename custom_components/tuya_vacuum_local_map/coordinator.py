@@ -51,8 +51,10 @@ from .core.protocol import (
     parse_path,
     parse_room_command,
     parse_rooms,
+    parse_status,
 )
 from .core.render import RenderInput, render_svg
+from .core.rooms import RoomLayer
 from .core.runs import RunTracker
 
 _LOGGER = logging.getLogger(__name__)
@@ -69,6 +71,8 @@ TICK = timedelta(seconds=1)
 KNOWN_TYPES = frozenset({20001, 21003, 21004, 21005, 21011, 21023, 30000})
 _MAX_UNKNOWN_TYPES = 20
 _MAX_FIELD_NAMES = 30
+COMMAND_WINDOW = 120.0  # seconds a room command waits for its run's first point
+KEEP_CALIBRATION = 5
 
 _monotonic = time.monotonic  # replaced in tests
 
@@ -101,7 +105,14 @@ class Coordinator:
 
         self.connected = False
         self.rooms: dict[int, str] = {}  # merged per room ID, never replaced
-        self.run_rooms: list[int] | None = None  # from the last room command
+        self._pending: tuple[list[int], float] | None = None  # a command, not yet a run
+        self._rooms_by_run: dict[int, list[int] | None] = {}
+        self._attributed: dict[int, frozenset[Any]] = {}
+        self.layer = RoomLayer()  # which cells belong to which room
+        self.reported_area: float | None = (
+            None  # from a 20001 status, if the model has one
+        )
+        self.calibration: list[dict[str, Any]] = []
         self.frame_counts: Counter[int] = Counter()
         self.unknown_types: dict[int, list[str]] = {}
         self.largest_frame = 0
@@ -146,6 +157,32 @@ class Coordinator:
         return {
             i: n for i, n in sorted(self.rooms.items()) if i not in self.hidden_rooms
         }
+
+    @property
+    def run_rooms(self) -> list[int] | None:
+        """The rooms the current run was asked to clean: a command waiting for its
+        run, or the one that started the run that is under way."""
+        if self._pending is not None:
+            return self._pending[0]
+        if self.tracker.live_point() is not None:
+            return self._rooms_by_run.get(self.tracker.path_id)
+        return None
+
+    @property
+    def position(self) -> tuple[int, int] | None:
+        """Where the vacuum last was, while a run is under way."""
+        return self.tracker.live_point()
+
+    @property
+    def current_room(self) -> str | None:
+        """The learned room under the vacuum, or None: not running, or the cell
+        belongs to no room we have learned."""
+        point = self.position
+        if point is None:
+            return None
+        cell = self.grid.cell
+        room = self.layer.owner((point[0] // cell, point[1] // cell))
+        return self.rooms.get(room) if room is not None else None
 
     @property
     def covered_area(self) -> float:
@@ -216,6 +253,16 @@ class Coordinator:
             self._stored_path_id = None
             return
         self.grid = grid
+        try:
+            raw = stored.get("room_layer")
+            self.layer = (
+                RoomLayer.from_bytes(base64.b64decode(raw, validate=True))
+                if raw
+                else RoomLayer()
+            )
+        except (ValueError, TypeError, binascii.Error):
+            _LOGGER.warning("The stored room outlines could not be read, starting over")
+            self.layer = RoomLayer()
         self.tracker = RunTracker(grid, finished_ids=finished)
         self.rooms = rooms
         self._stored_last_run = last_run
@@ -226,6 +273,7 @@ class Coordinator:
         (compressing a whole-home grid takes tens of milliseconds)."""
         return {
             "grid": self.grid.copy(),
+            "layer": self.layer.copy(),
             "previous_grid": self._previous_grid,
             "rooms": dict(self.rooms),
             "map_hash": self._map_hash,
@@ -240,6 +288,7 @@ class Coordinator:
         previous = parts["previous_grid"]
         return {
             "grid": _encode(parts["grid"].to_bytes()),
+            "room_layer": _encode(parts["layer"].to_bytes()),
             "previous_grid": _encode(previous) if previous else None,
             "rooms": {str(i): n for i, n in parts["rooms"].items()},
             "map_hash": parts["map_hash"],
@@ -307,7 +356,7 @@ class Coordinator:
                 timer()
         self._render_timer = self._notify_timer = self._save_timer = None
         await self.hass.async_add_executor_job(self.connection.stop)
-        self.tracker.flush()
+        self._learn(self.tracker.flush())
         await self._save_now()
         ir.async_delete_issue(self.hass, DOMAIN, self._issue_id)
 
@@ -327,7 +376,10 @@ class Coordinator:
         self._stored_points = 0
         self._stored_path_id = None
         self._revision_seen = 0
-        self.run_rooms = None
+        self._pending = None
+        self._rooms_by_run = {}
+        self._attributed = {}
+        self.layer = RoomLayer()
 
     # --- on the event loop ---
 
@@ -367,9 +419,16 @@ class Coordinator:
                 continue
             chunk = parse_path(frame)
             if chunk is not None:
+                latest = self.tracker.path_id
                 finished = self.tracker.add(chunk, now)
                 if finished:
                     self._finished(finished)
+                if self.tracker.path_id != latest:
+                    self._bind_command(self.tracker.path_id, now)
+                continue
+            status = parse_status(frame)
+            if status is not None:
+                self.reported_area = status.clean_area
                 continue
             parsed = parse_rooms(frame)
             if parsed is not None:
@@ -377,7 +436,7 @@ class Coordinator:
                 continue
             command = parse_room_command(frame)
             if command is not None:
-                self.run_rooms = command
+                self._pending = (command, now)
         if self.tracker.revision != self._revision_seen:
             self._revision_seen = self.tracker.revision
             self._request_render()
@@ -413,9 +472,56 @@ class Coordinator:
             self._finished(finished)
             self._notify()
 
+    def _bind_command(self, path_id: int | None, now: float) -> None:
+        """A run's first point arrived: it belongs to the room command just before it
+        (PROTOCOL: about 3 s earlier). A run with no recent command gets none."""
+        if path_id is None or path_id in self._rooms_by_run:
+            return
+        rooms = None
+        if self._pending is not None:
+            command, seen = self._pending
+            if now - seen <= COMMAND_WINDOW:
+                rooms = command
+            self._pending = None
+        self._rooms_by_run[path_id] = rooms
+        while len(self._rooms_by_run) > 10:
+            del self._rooms_by_run[next(iter(self._rooms_by_run))]
+
+    def _learn(self, run_ids: list[int]) -> None:
+        """From runs just counted: learn room outlines, and compare the area with
+        what the vacuum reported."""
+        for run_id in run_ids:
+            cells = self.tracker.run_cells(run_id)
+            if not cells:
+                continue
+            rooms = self._rooms_by_run.get(run_id)
+            if rooms:
+                self.layer.add_run(
+                    rooms, cells, self._attributed.get(run_id, frozenset())
+                )
+                self._attributed[run_id] = cells
+                while len(self._attributed) > 5:
+                    del self._attributed[next(iter(self._attributed))]
+            self._calibrate(len(cells))
+
+    def _calibrate(self, cells: int) -> None:
+        reported = self.reported_area
+        if not reported:
+            return
+        edge = self.grid.cell / self.units_per_metre
+        area = cells * edge * edge
+        self.calibration.append(
+            {
+                "map_area": round(area, 2),
+                "reported_area": reported,
+                "ratio": round(area / reported, 2),
+            }
+        )
+        del self.calibration[:-KEEP_CALIBRATION]
+
     def _finished(self, run_ids: list[int]) -> None:
         """A run was counted: draw and save now, don't wait for the timers."""
-        self.run_rooms = None
+        self._learn(run_ids)
         self._runs_changed()
 
     def _runs_changed(self) -> None:
@@ -482,7 +588,8 @@ class Coordinator:
             last_run=[list(segment) for segment in self.last_run],
             rooms=[Room(i, n) for i, n in sorted(self.rooms.items())],
             hidden_rooms=self.hidden_rooms,
-            position=None,  # the live position is phase 5
+            position=self.position,
+            room_layer=self.layer.copy(),
         )
         try:
             self.svg = await self.hass.async_add_executor_job(render_svg, data)
@@ -510,6 +617,9 @@ class Coordinator:
             "unknown_info_types": {str(k): v for k, v in self.unknown_types.items()},
             "largest_frame": self.largest_frame,
             "rooms": len(self.rooms),
+            "rooms_with_outlines": len(self.layer.known_rooms()),
+            "reported_area": self.reported_area,
+            "calibration": list(self.calibration),
             "covered_cells": self.grid.covered_cells(),
             "finished_runs": len(self.tracker.finished_ids),
             "renders": self.render_count,

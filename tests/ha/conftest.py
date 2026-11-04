@@ -24,3 +24,14 @@ def factory(monkeypatch):
     fake = Factory()
     monkeypatch.setattr(connection, "_tinytuya_device", fake)
     return fake
+
+
+@pytest.fixture
+def clock(monkeypatch):
+    from custom_components.tuya_vacuum_local_map import coordinator
+
+    from .common import CLOCK
+
+    CLOCK[0] = 1000.0
+    monkeypatch.setattr(coordinator, "_monotonic", lambda: CLOCK[0])
+    return CLOCK

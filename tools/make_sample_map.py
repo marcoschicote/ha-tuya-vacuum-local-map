@@ -1,8 +1,11 @@
 """Write docs/sample-map.svg from a simulated run in a made-up L-shaped home.
 
 Nothing here comes from a real vacuum or a real home. The "robot" mows lanes through
-two invented rooms, goes around an invented sofa, and a second, shorter run
-re-covers one room so the darker band shows. Run it from the repo root:
+two invented rooms, one room per run as if started from the app, goes around an
+invented sofa, and a third, shorter run re-covers part of the living room so the
+darker band shows. The room outlines are learned from those runs, as the integration
+does. The last run is still under way, so the vacuum's position is drawn. Run it
+from the repo root:
 
     python tools/make_sample_map.py
 """
@@ -22,6 +25,7 @@ from custom_components.tuya_vacuum_local_map.core.render import (  # noqa: E402
     RenderInput,
     render_svg,
 )
+from custom_components.tuya_vacuum_local_map.core.rooms import RoomLayer  # noqa: E402
 from custom_components.tuya_vacuum_local_map.core.runs import RunTracker  # noqa: E402
 
 STEP = 55
@@ -45,8 +49,9 @@ def lanes(x0, y0, x1, y1, blocked=()):
 
 
 SOFA = (2400, 1500, 4300, 2500)
-RUN_1 = lanes(300, 300, 6700, 4200, [SOFA]) + lanes(300, 4460, 2700, 7800)
-RUN_2 = lanes(300, 300, 6700, 2000, [SOFA])
+LIVING = lanes(300, 300, 6700, 4200, [SOFA])
+STUDY = lanes(300, 4460, 2700, 7800)
+AGAIN = lanes(300, 300, 6700, 2000, [SOFA])
 
 
 def feed(tracker, path_id, points, now):
@@ -65,17 +70,27 @@ def feed(tracker, path_id, points, now):
 def main():
     grid = CoverageGrid()
     tracker = RunTracker(grid)
-    now = feed(tracker, 1_700_000_000, RUN_1, 0.0)
-    tracker.flush()
-    feed(tracker, 1_700_090_000, RUN_2, now)
-    tracker.flush()
+    layer = RoomLayer()
+    now = 0.0
+    for path_id, room, points in (
+        (1_700_000_000, 1, LIVING),
+        (1_700_030_000, 2, STUDY),
+        (1_700_090_000, 1, AGAIN),
+    ):
+        now = feed(tracker, path_id, points, now)
+        tracker.flush()
+        layer.add_run([room], tracker.run_cells(path_id))
+    # a fourth run, still going: only part of it has arrived
+    live = LIVING[: len(LIVING) // 3]
+    feed(tracker, 1_700_120_000, live, now + 500)
     svg = render_svg(
         RenderInput(
             grid=grid,
             last_run=tracker.last_run,
             rooms=[Room(1, "Living room"), Room(2, "Study")],
             hidden_rooms=frozenset(),
-            position=RUN_2[-1],
+            position=tracker.live_point(),
+            room_layer=layer,
         )
     )
     out = ROOT / "docs" / "sample-map.svg"

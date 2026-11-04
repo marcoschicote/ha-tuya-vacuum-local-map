@@ -34,7 +34,7 @@ async def start_flow(hass, user_input):
     return await hass.config_entries.flow.async_configure(result["flow_id"], user_input)
 
 
-# --- config flow --------------------------------------------------------------------
+# --- config flow ---
 
 
 async def test_flow_success_creates_an_entry(hass, factory):
@@ -136,7 +136,7 @@ async def test_unknown_protocol_version_is_not_accepted(hass, factory):
         )
 
 
-# --- setup and unload ---------------------------------------------------------------
+# --- setup and unload ---
 
 
 async def test_setup_connects_and_unload_stops_the_thread(hass, factory):
@@ -226,7 +226,7 @@ async def test_an_unreachable_vacuum_leaves_the_entry_loaded_and_retrying(
     await hass.config_entries.async_unload(entry.entry_id)
 
 
-# --- the repair issue ---------------------------------------------------------------
+# --- the repair issue ---
 
 
 async def test_a_long_outage_raises_a_repair_issue_and_recovery_removes_it(
@@ -271,7 +271,7 @@ async def test_the_outage_reaches_the_repair_issue_end_to_end(
     await hass.config_entries.async_unload(entry.entry_id)
 
 
-# --- options flow -------------------------------------------------------------------
+# --- options flow ---
 
 
 async def test_options_flow_offers_the_known_rooms_and_saves_numbers(hass, factory):

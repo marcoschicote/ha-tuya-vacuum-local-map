@@ -11,8 +11,9 @@ from collections import defaultdict
 from dataclasses import dataclass
 from xml.sax.saxutils import escape
 
-from .grid import LIMIT, CoverageGrid
+from .grid import LIMIT, Cell, CoverageGrid
 from .protocol import Room
+from .rooms import RoomLayer
 
 MAX_BYTES = 500_000  # budget for a whole-home map
 
@@ -21,6 +22,15 @@ TRAIL = "#e8590c"
 # (lowest count, highest count, opacity): one <path> each. Translucent, so the same
 # colours read on light and dark dashboards.
 BANDS = ((1, 1, 0.25), (2, 2, 0.4), (3, 4, 0.55), (5, 255, 0.7))
+
+# Room tints, cycled by room ID: soft, and distinct from the coverage blue.
+ROOM_COLOURS = (
+    "#e6550d", "#31a354", "#756bb1", "#dd1c77",
+    "#8c6d31", "#17becf", "#bcbd22", "#e377c2",
+)  # fmt: skip
+ROOM_OPACITY = 0.3
+LABEL_FILL = "#1b1b1b"
+LABEL_OUTLINE = "#ffffff"
 
 _MAX_NAMES = 200
 _MAX_NAME_LENGTH = 64
@@ -37,6 +47,7 @@ class RenderInput:
     rooms: list[Room]
     hidden_rooms: frozenset[int]
     position: tuple[int, int] | None
+    room_layer: RoomLayer | None = None  # learned outlines, if any
 
 
 @dataclass(frozen=True)
@@ -92,9 +103,28 @@ def _placeholder() -> bytes:
     )
 
 
+def _merge_rows(rows: dict[int, list[int]], origin_x: int, origin_top: int) -> str:
+    """Path data for blocks given as {row: [columns]}: each row's neighbouring blocks
+    merge into one rectangle. The y flip, in blocks, is `origin_top - (y + 1)`."""
+    d = []
+    for y in sorted(rows):
+        xs = sorted(rows[y])
+        top = origin_top - (y + 1)
+        start = previous = xs[0]
+        for x in [*xs[1:], None]:
+            if x is not None and x == previous + 1:
+                previous = x
+                continue
+            width = previous - start + 1
+            d.append(f"M{start - origin_x} {top}h{width}v1h-{width}z")
+            if x is not None:
+                start = previous = x
+    return "".join(d)
+
+
 def _band_paths(grid: CoverageGrid, frame: _Frame, factor: int) -> list[str]:
     """One path per band. Blocks of `factor` x `factor` cells take their highest
-    count, and each row's neighbouring blocks merge into one rectangle."""
+    count."""
     unit = grid.cell * factor
     origin_x = frame.left // unit
     origin_top = frame.top // unit
@@ -114,24 +144,62 @@ def _band_paths(grid: CoverageGrid, frame: _Frame, factor: int) -> list[str]:
                 break
     paths = []
     for band, (_, _, opacity) in enumerate(BANDS):
-        d = []
-        for y in sorted(rows[band]):
-            xs = sorted(rows[band][y])
-            top = origin_top - (y + 1)  # the y flip, in blocks
-            start = previous = xs[0]
-            for x in [*xs[1:], None]:
-                if x is not None and x == previous + 1:
-                    previous = x
-                    continue
-                width = previous - start + 1
-                d.append(f"M{start - origin_x} {top}h{width}v1h-{width}z")
-                if x is not None:
-                    start = previous = x
-        if d:
-            paths.append(
-                f'<path fill="{COVERAGE}" fill-opacity="{opacity}" d="{"".join(d)}"/>'
-            )
+        if rows[band]:
+            d = _merge_rows(rows[band], origin_x, origin_top)
+            paths.append(f'<path fill="{COVERAGE}" fill-opacity="{opacity}" d="{d}"/>')
     return paths
+
+
+def _tint_paths(
+    owners: dict[Cell, int],
+    hidden: frozenset[int],
+    cell: int,
+    frame: _Frame,
+    factor: int,
+) -> list[str]:
+    """One tinted path per learned room, under the coverage."""
+    unit = cell * factor
+    origin_x = frame.left // unit
+    origin_top = frame.top // unit
+    per_room: dict[int, dict[int, set[int]]] = {}
+    for (x, y), room in owners.items():
+        if room not in hidden:
+            per_room.setdefault(room, {}).setdefault(y // factor, set()).add(
+                x // factor
+            )
+    paths = []
+    for room in sorted(per_room):
+        rows = {y: list(xs) for y, xs in per_room[room].items()}
+        colour = ROOM_COLOURS[room % len(ROOM_COLOURS)]
+        d = _merge_rows(rows, origin_x, origin_top)
+        paths.append(f'<path fill="{colour}" fill-opacity="{ROOM_OPACITY}" d="{d}"/>')
+    return paths
+
+
+def _labels(
+    data: RenderInput, labels: dict[int, Cell], frame: _Frame, span: int
+) -> str:
+    """Room names at the centre of their cells. The outline (painted first) keeps
+    them readable on both light and dark dashboards. Names come from the network."""
+    names = {room.id: room.name for room in data.rooms}
+    cell = data.grid.cell
+    size = max(span // 40, cell * 4)
+    out = []
+    for room, (cx, cy) in sorted(labels.items()):
+        name = _clean(names.get(room, ""))
+        if not name or room in data.hidden_rooms:
+            continue
+        x = frame.x(cx * cell + cell // 2)
+        y = frame.y(cy * cell + cell // 2)
+        out.append(f'<text x="{x}" y="{y}">{name}</text>')
+    if not out:
+        return ""
+    return (
+        f'<g font-family="sans-serif" font-size="{size}" text-anchor="middle" '
+        f'dominant-baseline="central" fill="{LABEL_FILL}" stroke="{LABEL_OUTLINE}" '
+        f'stroke-width="{max(size // 5, 1)}" stroke-linejoin="round" '
+        f'paint-order="stroke">{"".join(out)}</g>'
+    )
 
 
 def _trail(segments: list[list[Point]], frame: _Frame) -> str:
@@ -170,18 +238,24 @@ def _description(data: RenderInput) -> str:
 
 
 def _build(
-    data: RenderInput, bounds: tuple[int, int, int, int], factor: int
+    data: RenderInput,
+    bounds: tuple[int, int, int, int],
+    factor: int,
+    owners: dict[Cell, int],
+    labels: dict[int, Cell],
 ) -> bytes | None:
     cell = data.grid.cell
     span = max(bounds[2] - bounds[0], bounds[3] - bounds[1])
     frame = _frame(bounds, max(cell * 4, span // 20), cell * factor)
     scale = cell * factor
     body = ["<title>Coverage map</title>", _description(data)]
+    tints = _tint_paths(owners, data.hidden_rooms, cell, frame, factor)
     paths = _band_paths(data.grid, frame, factor)
-    if paths:
-        body.append(f'<g transform="scale({scale})">{"".join(paths)}</g>')
+    if tints or paths:
+        body.append(f'<g transform="scale({scale})">{"".join(tints + paths)}</g>')
     trail = _trail(data.last_run, frame)
     body.append(trail)
+    body.append(_labels(data, labels, frame, span))
     drawn = bool(paths or trail)
     if data.position is not None and _in_range(data.position):
         radius = max(cell * 2, span // 80)
@@ -216,9 +290,11 @@ def render_svg(data: RenderInput) -> bytes:
             )
     if bounds is None:
         return _placeholder()
+    owners = data.room_layer.owners() if data.room_layer else {}
+    labels = data.room_layer.label_cells(owners) if data.room_layer else {}
     # Over budget: draw coarser blocks until it fits.
     for factor in (1, 2, 4, 8):
-        svg = _build(data, bounds, factor)
+        svg = _build(data, bounds, factor, owners, labels)
         if svg is None:
             return _placeholder()  # nothing in range, or only lone points
         if len(svg) <= MAX_BYTES:

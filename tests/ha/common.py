@@ -5,6 +5,7 @@ import json
 import pathlib
 
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.tuya_vacuum_local_map.const import (
@@ -31,6 +32,10 @@ USER_INPUT = {
 }
 DATA = dict(USER_INPUT)
 ENTRY_ID = "test_entry_id"
+STORE_KEY = f"{DOMAIN}.{ENTRY_ID}"
+IDLE = 130  # seconds: past the 120 s a run needs to go quiet
+NS = "{http://www.w3.org/2000/svg}"
+CLOCK = [1000.0]  # the coordinator's clock in tests, set by the `clock` fixture
 
 
 def envelope(info_type, data, **extra):
@@ -85,4 +90,37 @@ def serpentine(width=2000, height=1000, step=50, lane=250):
         points += [(x, y) for x in (xs if forward else reversed(xs))]
         forward = not forward
         y += lane
+    return points
+
+
+def entity_id(hass, platform, key):
+    registry = er.async_get(hass)
+    found = registry.async_get_entity_id(platform, DOMAIN, f"{ENTRY_ID}_{key}")
+    assert found, key
+    return found
+
+
+def state(hass, platform, key):
+    return hass.states.get(entity_id(hass, platform, key))
+
+
+async def feed(hass, entry, dps, tick=2.0):
+    """Deliver a message. The clock moves on first, so the once-a-second limit on
+    entity updates lets this one through (tests of the limit pass tick=0)."""
+    CLOCK[0] += tick
+    entry.runtime_data._handle_dps(dps)
+    await hass.async_block_till_done(wait_background_tasks=True)
+
+
+async def end_run(hass, entry, clock=None):
+    """Let a run go quiet, so it is counted."""
+    CLOCK[0] += IDLE
+    entry.runtime_data._tick(None)
+    await hass.async_block_till_done(wait_background_tasks=True)
+
+
+async def run_once(hass, entry, clock=None, path_id=1700000000, points=None):
+    points = points or serpentine()
+    await feed(hass, entry, chunk_dps(path_id, 0, points))
+    await end_run(hass, entry)
     return points

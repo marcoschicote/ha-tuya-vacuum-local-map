@@ -64,6 +64,10 @@ class RunAssembler:
                 changed = True
         return changed
 
+    def last_point(self) -> Point | None:
+        """The point with the highest index, which is where the vacuum last was."""
+        return self._points[max(self._points)] if self._points else None
+
     def segments(self) -> list[list[Point]]:
         """Runs of points in order, split at missing indexes and at jumps."""
         segments: list[list[Point]] = []

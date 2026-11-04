@@ -70,6 +70,18 @@ class RunTracker:
         run = self._runs.get(self._latest) if self._latest is not None else None
         return len(run.assembler) if run else 0
 
+    def run_cells(self, path_id: int) -> frozenset[Cell] | None:
+        """The cells a run covers in the grid, if its points are still in memory."""
+        run = self._runs.get(path_id)
+        return run.cells if run else None
+
+    def live_point(self) -> Point | None:
+        """The newest point of a run that hasn't gone quiet yet, else None."""
+        run = self._runs.get(self._latest) if self._latest is not None else None
+        if run is None or not run.dirty:
+            return None
+        return run.assembler.last_point()
+
     @property
     def last_run(self) -> list[list[Point]]:
         """Segments of the run that last received a new point, for drawing."""

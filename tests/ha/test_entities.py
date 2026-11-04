@@ -7,8 +7,6 @@ import pytest
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.helpers import entity_registry as er
 
-from custom_components.tuya_vacuum_local_map import coordinator as coordinator_module
-from custom_components.tuya_vacuum_local_map.const import DOMAIN
 from custom_components.tuya_vacuum_local_map.diagnostics import (
     async_get_config_entry_diagnostics,
 )
@@ -16,26 +14,19 @@ from custom_components.tuya_vacuum_local_map.diagnostics import (
 from ..fakes import DEVICE_ID, HOST, KEY, FakeDevice, wait_for
 from .common import (
     ENTRY_ID,
+    NS,
+    STORE_KEY,
     chunk_dps,
+    end_run,
+    entity_id,
     envelope,
+    feed,
     rooms_dps,
+    run_once,
     serpentine,
     setup_entry,
+    state,
 )
-
-STORE_KEY = f"{DOMAIN}.{ENTRY_ID}"
-IDLE = 130  # seconds: past the 120 s a run needs to go quiet
-NS = "{http://www.w3.org/2000/svg}"
-
-
-_CLOCK = [1000.0]
-
-
-@pytest.fixture
-def clock(monkeypatch):
-    _CLOCK[0] = 1000.0
-    monkeypatch.setattr(coordinator_module, "_monotonic", lambda: _CLOCK[0])
-    return _CLOCK
 
 
 @pytest.fixture(autouse=True)
@@ -43,38 +34,6 @@ def _device(factory):
     # A connected, silent vacuum for tests that feed frames in directly.
     factory.devices.extend(FakeDevice() for _ in range(5))
     return factory
-
-
-def entity_id(hass, platform, key):
-    registry = er.async_get(hass)
-    found = registry.async_get_entity_id(platform, DOMAIN, f"{ENTRY_ID}_{key}")
-    assert found, key
-    return found
-
-
-def state(hass, platform, key):
-    return hass.states.get(entity_id(hass, platform, key))
-
-
-async def feed(hass, entry, dps, tick=2.0):
-    """Deliver a message. The clock moves on first, so the once-a-second limit on
-    entity updates lets this one through (tests of the limit pass tick=0)."""
-    _CLOCK[0] += tick
-    entry.runtime_data._handle_dps(dps)
-    await hass.async_block_till_done(wait_background_tasks=True)
-
-
-async def end_run(hass, entry, clock):
-    clock[0] += IDLE
-    entry.runtime_data._tick(None)
-    await hass.async_block_till_done(wait_background_tasks=True)
-
-
-async def run_once(hass, entry, clock, path_id=1700000000, points=None):
-    points = points or serpentine()
-    await feed(hass, entry, chunk_dps(path_id, 0, points))
-    await end_run(hass, entry, clock)
-    return points
 
 
 # --- frames to entities ---
@@ -89,6 +48,7 @@ async def test_the_entities_exist_on_one_device(hass, clock):
         for k in (
             "coverage_map",
             "rooms",
+            "current_room",
             "run_points",
             "covered_area",
             "connected",

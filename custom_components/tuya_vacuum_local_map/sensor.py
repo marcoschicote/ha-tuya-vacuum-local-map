@@ -23,6 +23,7 @@ async def async_setup_entry(
     async_add_entities(
         [
             RoomsSensor(coordinator),
+            CurrentRoomSensor(coordinator),
             RunPointsSensor(coordinator),
             AreaSensor(coordinator),
         ]
@@ -77,3 +78,17 @@ class AreaSensor(TuyaVacuumEntity, SensorEntity):
     @property
     def native_value(self) -> float:
         return self.coordinator.covered_area
+
+
+class CurrentRoomSensor(TuyaVacuumEntity, SensorEntity):
+    """The room under the vacuum, from outlines learned from single-room runs.
+
+    Unknown when no run is under way, or the vacuum is somewhere we haven't learned.
+    """
+
+    def __init__(self, coordinator: Coordinator) -> None:
+        super().__init__(coordinator, "current_room")
+
+    @property
+    def native_value(self) -> str | None:
+        return self.coordinator.current_room

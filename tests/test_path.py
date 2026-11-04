@@ -279,3 +279,32 @@ def test_revision_and_point_count_track_new_points_only():
     assert (t.revision, t.point_count) == (2, 8)
     t.add(chunk(100, 0, [], total=0), now=3)  # an empty chunk
     assert t.revision == 2
+
+
+def test_live_point_is_the_newest_point_until_the_run_is_counted():
+    t = tracker()
+    assert t.live_point() is None
+    t.add(chunk(100, 0, line(5)), now=0)
+    assert t.live_point() == (200, 0)
+    t.add(chunk(100, 5, line(2, x0=250)), now=1)
+    assert t.live_point() == (300, 0)
+    t.poll(IDLE_SECONDS + 1)
+    assert t.live_point() is None  # counted: no longer where the vacuum is
+
+
+def test_run_cells_are_those_stamped_into_the_grid():
+    t = tracker()
+    t.add(chunk(100, 0, line(20)), now=0)
+    assert t.run_cells(100) == frozenset()  # not counted yet
+    t.flush()
+    cells = t.run_cells(100)
+    assert cells and set(t.grid.cells()) == set(cells)
+    assert t.run_cells(999) is None
+
+
+def test_the_assembler_knows_its_last_point():
+    run = RunAssembler()
+    assert run.last_point() is None
+    run.add(chunk(1, 0, line(3), total=10))
+    run.add(chunk(1, 7, [(9, 9)], total=10))
+    assert run.last_point() == (9, 9)
