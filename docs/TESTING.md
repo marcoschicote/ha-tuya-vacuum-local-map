@@ -15,9 +15,12 @@ room names or real coordinates, and no screenshot of a real map (AGENTS.md, rule
 
 - Home Assistant 2026.2 or newer, and the vacuum's local key, device ID, IP address and
   protocol version (README, "Set up").
-- Install the integration (README, "Install"). While the repository is private, HACS
-  can't fetch it: copy `custom_components/tuya_vacuum_local_map` into Home Assistant's
-  `custom_components` folder instead, then restart.
+- Install the integration (README, "Install"). Releases so far are pre-releases (for
+  example `0.1.0-alpha.1`), which HACS lists only if "Show beta versions" is on for this
+  repository. Without it, copy `custom_components/tuya_vacuum_local_map` from the tag you
+  are testing into Home Assistant's `custom_components` folder instead. Restart afterwards.
+- Note the version you are testing (Settings, Devices & services, the integration's
+  page, or `manifest.json`), for the results table.
 - If LocalTuya or Tuya Local already holds the vacuum's connection, some models accept
   only one local connection. Note whether both work together on yours.
 - Note Home Assistant's memory use now (Settings, System, Repairs, or the host's own
@@ -65,6 +68,15 @@ Each step says what good looks like. Write down what you see, even when it's fin
 One row per model and run of this procedure. Add yours with a pull request or an issue
 from the new-model template. Keep it to what happened, with no private values.
 
-| Model | Protocol | Date | Result | Notes |
-| --- | --- | --- | --- | --- |
-| | | | | |
+| Model | Version | Protocol | Date | Result | Notes |
+| --- | --- | --- | --- | --- | --- |
+| | | | | | |
+
+## Releasing
+
+Releases are cut by hand with the **Release** workflow (Actions tab, Run workflow). It
+takes a version such as `0.1.0` or `0.1.0-alpha.1`, checks that it matches `version` in
+`manifest.json`, that `test` and `hassfest` passed on the commit, and that the tag is new.
+It then tags the commit and publishes the release, as a pre-release if the version has a
+`-`. Set the manifest version first, and cut a full release only after this procedure has
+passed on at least one real model.
