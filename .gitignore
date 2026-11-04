@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.DS_Store
+
+# Raw device captures can hold device IDs, room names and home layouts.
+captures/
+.env
+
+*.egg-info/

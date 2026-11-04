@@ -1,0 +1,11 @@
+{
+  "domain": "tuya_vacuum_map",
+  "name": "Tuya Vacuum Coverage Map",
+  "codeowners": ["@marcoschicote"],
+  "documentation": "https://github.com/marcoschicote/ha-tuya-vacuum-map",
+  "integration_type": "device",
+  "iot_class": "local_push",
+  "issue_tracker": "https://github.com/marcoschicote/ha-tuya-vacuum-map/issues",
+  "requirements": ["tinytuya>=1.20.0,<2"],
+  "version": "0.0.0"
+}

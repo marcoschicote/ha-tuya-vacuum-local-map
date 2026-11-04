@@ -1,0 +1,60 @@
+[
+  {
+    "name": "path_chunk_nova",
+    "source": "Real frame, public: https://github.com/make-all/tuya-local/issues/1660",
+    "dp": "102",
+    "b64": "eyJkYXRhIjp7InBhdGhJRCI6MTcwODAyMzQyNiwicG9pbnRDb3VudHMiOjgsInBvc0FycmF5IjpbWy0xOTExLC0xMzExXSxbLTE5NDcsLTEzMzFdLFstMTk5NSwtMTMzOV0sWy0yMDQ3LC0xMzM5XSxbLTIwOTksLTEzMzFdLFstMjE0MywtMTMxOV0sWy0yMTg3LC0xMzA3XSxbLTIyMjMsLTEyOTFdXSwic3RhcnRQb3MiOjk5LCJ0b3RhbFBvaW50cyI6MTA3fSwiaW5mb1R5cGUiOjIxMDExLCJtZXNzYWdlIjoib2siLCJ0cyI6MTcwODAyMzUwMn0=",
+    "decoded": {
+      "data": {
+        "pathID": 1708023426,
+        "pointCounts": 8,
+        "posArray": [[-1911, -1311], [-1947, -1331], [-1995, -1339], [-2047, -1339], [-2099, -1331], [-2143, -1319], [-2187, -1307], [-2223, -1291]],
+        "startPos": 99,
+        "totalPoints": 107
+      },
+      "infoType": 21011,
+      "message": "ok",
+      "ts": 1708023502
+    }
+  },
+  {
+    "name": "status_nova",
+    "source": "Real decoded frame, public: https://github.com/make-all/tuya-local/issues/1660",
+    "dp": "102",
+    "decoded": {
+      "data": {"cleanArea": 11, "cleanTime": 570, "elec": 82, "elecReal": 82, "mode": "sweep", "subMode": "smart", "timeStamp": 1708024009},
+      "infoType": 20001
+    }
+  },
+  {
+    "name": "room_list_reconstructed",
+    "source": "RECONSTRUCTED from notes, values made up, shape unconfirmed: replace in phase 0",
+    "dp": "127",
+    "decoded": {
+      "infoType": 21004,
+      "data": {
+        "mapId": 1000000001,
+        "autoAreaValue": [
+          {"id": 1, "name": "Room1", "pos": [-4000, 1000], "cleanType": "sweepOnly", "workNoisy": "auto", "cleanOrder": 0, "active": true},
+          {"id": 2, "name": "2a+33+33+31+1f", "cleanOrder": 0, "active": true}
+        ],
+        "value": [
+          {"mode": "area", "tag": "36+33+33+31+1c", "points": [[0, 0], [1000, 0], [1000, 1000], [0, 1000]]}
+        ]
+      }
+    }
+  },
+  {
+    "name": "room_command_reconstructed",
+    "source": "RECONSTRUCTED from notes, values made up, nesting unconfirmed: replace in phase 0",
+    "dp": "127",
+    "decoded": {
+      "infoType": 30000,
+      "cmds": [
+        {"infoType": 21023, "data": {"segmentId": [2, 7], "mapId": 1000000001, "cleanId": [-3], "extraAreas": []}},
+        {"infoType": 21005, "data": {"mode": "reAppointClean"}}
+      ],
+      "mainCmds": [21005]
+    }
+  }
+]
