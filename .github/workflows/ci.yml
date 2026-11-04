@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 jobs:
   test:
@@ -30,9 +31,8 @@ jobs:
 
   hacs:
     # The HACS action refuses private repositories ("can only validate public
-    # repositories"), so this job is skipped while the repo is private and starts
-    # running once it is public. A skipped job shows as passing: until then, HACS
-    # validation has not happened.
+    # repositories"), so this job is skipped while a repo is private. It runs now that
+    # this one is public; the guard stays so a private fork's CI doesn't fail on it.
     if: ${{ !github.event.repository.private }}
     runs-on: ubuntu-latest
     steps:
