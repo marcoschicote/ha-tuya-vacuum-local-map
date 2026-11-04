@@ -2,7 +2,7 @@
 
 Start with [docs/PLAN.md](docs/PLAN.md), then [docs/PROTOCOL.md](docs/PROTOCOL.md). Work through the plan's phases in order.
 
-**This repo is public, from the first commit.** Assume everything pushed here is read and copied straight away, and that deleting it later doesn't undo that. Git history, issues, PRs, CI logs and screenshots all count.
+**Work as if this repo were already public.** It's private for now, but it will go public with its full history, so assume everything pushed here gets read and copied, and that deleting it later doesn't undo that. Git history, issues, PRs, CI logs and screenshots all count. Only the owner decides when it goes public.
 
 ## Rules
 

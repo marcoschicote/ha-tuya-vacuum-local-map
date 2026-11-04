@@ -1,5 +1,5 @@
 [project]
-name = "ha-tuya-vacuum-map"
+name = "ha-tuya-vacuum-local-map"
 version = "0.0.0"
 description = "Local coverage map for Tuya robot vacuums in Home Assistant"
 requires-python = ">=3.13"

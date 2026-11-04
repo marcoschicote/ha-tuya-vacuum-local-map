@@ -65,7 +65,7 @@ The raw Rowenta captures weren't kept, so several shapes in PROTOCOL.md are only
   - What are the field names of the rectangles in `value`?
   - Do encoded names use Unicode code points?
   - Does the last-run re-send use the same `pathID` as the original run?
-- Add anonymised fixtures to `tests/fixtures/frames.json`. **This repo is public, so this step is the one to get right.** Replace `mapId` and names. Don't just shift and scale coordinates, since the home's layout stays recognisable: keep the structure and sizes, but generate the points (a made-up room shape walked in lines). Show the owner the result and run `tools/check_private.py` before committing.
+- Add anonymised fixtures to `tests/fixtures/frames.json`. **This repo is going public with its history, so this step is the one to get right.** Replace `mapId` and names. Don't just shift and scale coordinates, since the home's layout stays recognisable: keep the structure and sizes, but generate the points (a made-up room shape walked in lines). Show the owner the result and run `tools/check_private.py` before committing.
 - **Spike the image format.** In a throwaway custom integration on a test HA, return an SVG from an `ImageEntity` (`_attr_content_type = "image/svg+xml"`) and check it displays in a picture-entity card, in the app as well as the browser. If it doesn't, use PNG via Pillow in `render.py` and update this plan.
 
 **Done when:** every question above is answered and the spike has a result.

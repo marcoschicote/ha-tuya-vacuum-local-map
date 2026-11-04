@@ -1,8 +1,9 @@
 """Look for private data in tracked and staged files and in commit messages.
 
-This repo is public, so run this before committing. It finds what looks private
-in general, plus the terms in .private-terms (git-ignored, one term per line, for
-the owner's own device ID, room names and so on). It can't read images.
+This repo will be public with its full history, so run this before committing. It
+finds what looks private in general, plus the terms in .private-terms (git-ignored,
+one term per line, for the owner's own device ID, room names and so on). It can't
+read images.
 """
 
 import pathlib
