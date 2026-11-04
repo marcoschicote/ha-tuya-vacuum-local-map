@@ -6,7 +6,6 @@ flips it: `sx = x - min_x`, `sy = max_y - y`, in device units.
 
 from __future__ import annotations
 
-import re
 from collections import defaultdict
 from dataclasses import dataclass
 from xml.sax.saxutils import escape
@@ -35,7 +34,6 @@ LABEL_OUTLINE = "#ffffff"
 _MAX_NAMES = 200
 _MAX_NAME_LENGTH = 64
 # Anything XML 1.0 can't carry (control characters, lone surrogates, U+FFFE/F).
-_NOT_XML = re.compile("[^\t\n\r -퟿-�\U00010000-\U0010ffff]")
 
 Point = tuple[int, int]
 
@@ -82,8 +80,22 @@ def _frame(bounds: tuple[int, int, int, int], margin: int, unit: int) -> _Frame:
     return _Frame(left=left, top=top, width=right - left, height=top - bottom)
 
 
+def _xml_char(char: str) -> bool:
+    """Whether XML 1.0 can carry this character: tab, newline, carriage return, and
+    U+0020 to U+D7FF, U+E000 to U+FFFD and everything above U+FFFF."""
+    code = ord(char)
+    return (
+        code in (0x9, 0xA, 0xD)
+        or 0x20 <= code <= 0xD7FF
+        or 0xE000 <= code <= 0xFFFD
+        or code >= 0x10000
+    )
+
+
 def _clean(text: str) -> str:
-    text = _NOT_XML.sub("", text).replace("\n", " ").replace("\r", " ")
+    text = (
+        "".join(c for c in text if _xml_char(c)).replace("\n", " ").replace("\r", " ")
+    )
     return escape(text[:_MAX_NAME_LENGTH])
 
 
