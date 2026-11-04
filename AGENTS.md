@@ -30,7 +30,10 @@ uv venv && uv pip install -e ".[test]"
 Things that nearly went wrong, kept here because they will again. None of them involve real values, and none should.
 
 - **A machine's default git email can reveal its hostname and network name.** It lands in every commit and in public searches by email. Use a GitHub noreply address, set in `git config --global user.email`, before the first commit. The check fails on any other email.
-- **Rewriting history is not an undo.** A pushed commit can stay reachable by its ID for a while. Prevent leaks instead of cleaning them up, and let the owner decide how to clean up.
+- **Rewriting history is not an undo.** A pushed commit can stay reachable by its ID for good, and the CI run for it keeps listing it. Here, a rewritten history left the original commit fetchable by its ID, and the only sure fix was a new repository. Prevent leaks instead of cleaning them up, and let the owner decide how to clean up.
+- **GitHub builds commits in your name, with your account's email.** A pull request's CI checks out a merge commit GitHub makes, and its Merge and Squash buttons write one too. If the account's commit email is private, they carry it. Turn on "Keep my email addresses private" and "Block command line pushes that expose my email" in the account's email settings before the first pull request, and check `refs/pull/N/merge` on a throwaway one. `check_private.py` skips only that temporary merge commit, on `pull_request` runs.
+- **A shallow checkout hides history.** `actions/checkout` fetches one commit by default, so a check on emails or commit messages sees only the tip. CI uses `fetch-depth: 0`.
+- **A failing check can print the thing it found.** Make a check report where, not what, and delete the logs of any run that printed a private value.
 - **Scripts written against a real device tend to have its ID, host or key hardcoded.** Take them from environment variables, as `tools/capture.py` does.
 - **Command output ends up in logs and transcripts.** Don't print device IDs, keys or hosts, not even while debugging.
 - **Shifting or scaling a real map still shows the home's layout.** Generate made-up coordinates for fixtures and samples.
