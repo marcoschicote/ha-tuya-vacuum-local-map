@@ -332,11 +332,21 @@ Options flow: hidden rooms, brush width (default 300), units per metre (default 
 
 ## Phase 6: ready for others
 
-- `brand/icon.png`.
-- Add the [HACS action](https://www.hacs.xyz/docs/publish/action/) to CI, once the icon is in.
-- README: install steps, screenshot (anonymised, no real home), how to get the local key, limits, how to report a new model using diagnostics.
-- A release, with `version` in the manifest matching the tag.
-- **Ask the owner first**, then: try a second model (MaikeMota reported a Kabum Smart 900 with the same messages on [#900](https://github.com/xZetsubou/hass-localtuya/issues/900), so ask whether they would test it), reply on [tuya-local #288](https://github.com/make-all/tuya-local/issues/288) that it exists, and submit to the HACS default list.
+**Done in this repo:**
+
+- `brand/icon.png` (256 px) and `icon@2x.png` (512 px), drawn by `tools/make_icon.py` from made-up shapes.
+- The [HACS action](https://www.hacs.xyz/docs/publish/action/) in CI (`hacs` job), next to hassfest. It has never run: it needs a GitHub repository description and topics, which are repository settings and not files, and it may refuse a private repo. Expect to adjust it on its first run.
+- `hacs.json` names the Home Assistant version it was tested on (2026.2.0) as the minimum. That is the tested version, not a measured lower bound.
+- README: what it does and doesn't, install, where to get the local key, options, the map card, limits, which vacuums, how to report a model with the diagnostics file, privacy, developer commands. It carries the simulated sample and says so.
+- Issue templates: a new-model report that asks for the diagnostics file and warns off keys and captures, and a bug report.
+- Tests that the icons are PNGs of the right size, `strings.json` equals `translations/en.json`, every entity key has a translation, and the README's relative links resolve.
+- `tools/check_private.py` no longer reads image names like `icon@2x.png` as an email address.
+
+**Not done, waiting on a tested integration (the owner decides when):**
+
+- **A release.** `version` in the manifest is still `0.0.0`. Tag only after the 24-hour hold and a real run, with `version` set to match the tag.
+- **Repository settings** HACS needs: description and topics (such as `home-assistant`, `hacs`, `tuya`, `vacuum`). Public or private is the owner's call (AGENTS.md).
+- **Outward steps, only after testing and only with the owner's OK:** ask whether a Kabum Smart 900 owner (MaikeMota, on [#900](https://github.com/xZetsubou/hass-localtuya/issues/900)) would test it, reply on [tuya-local #288](https://github.com/make-all/tuya-local/issues/288) that it exists, and submit to the HACS default list. The text gets shown to the owner before anything is posted (AGENTS.md rule 7).
 
 ## Later, not planned yet
 

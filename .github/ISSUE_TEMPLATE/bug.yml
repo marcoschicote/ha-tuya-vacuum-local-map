@@ -1,0 +1,26 @@
+name: Bug
+description: Something in the integration doesn't work
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Never paste your local key, device ID, IP address or a raw capture.** Remove them from logs before you paste.
+  - type: input
+    id: versions
+    attributes:
+      label: Home Assistant and integration versions
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what you expected
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log lines
+      description: Only lines from `custom_components.tuya_vacuum_local_map`, with anything private removed.
+      render: text

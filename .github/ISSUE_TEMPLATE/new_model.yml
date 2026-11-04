@@ -1,0 +1,36 @@
+name: New vacuum model, or the map isn't right
+description: A vacuum that isn't listed, or one where the map, rooms or position look wrong
+labels: [model]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Never paste your local key, device ID, IP address or a raw capture.** A capture shows the layout of your home. The diagnostics file leaves those out, but please read it before you attach it.
+  - type: input
+    id: model
+    attributes:
+      label: Vacuum make and model
+      description: And the Tuya category and protocol version if you know them (for example `sd`, 3.3).
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happens
+      description: What you see, and what you expected. For a wrong map, say whether the shape, the rooms or the position is off.
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      description: "Settings → Devices & services → Tuya Vacuum Local Map → ⋮ → Download diagnostics. Drag the file here."
+    validations:
+      required: true
+  - type: dropdown
+    id: other
+    attributes:
+      label: Do other apps or integrations also connect to this vacuum locally?
+      options: ["No", "Yes: LocalTuya", "Yes: Tuya Local", "Yes: something else", "Not sure"]
+    validations:
+      required: true
