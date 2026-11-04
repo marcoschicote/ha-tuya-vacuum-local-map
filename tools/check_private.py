@@ -23,7 +23,7 @@ PATTERNS = {
         r"""(?i)local_?key["']?\s*[:=]\s*["'][^"'\s.]{16}["']"""
     ),
     "email address": re.compile(
-        r"\b[\w.+-]+@(?!users\.noreply|anthropic\.com)[\w-]+\.\w+"
+        r"\b[\w.+-]+@(?!users\.noreply|anthropic\.com|github\.com)[\w-]+\.\w+"
     ),
 }
 
