@@ -350,10 +350,7 @@ Options flow: hidden rooms, brush width (default 300), units per metre (default 
 
 ## Later, not planned yet
 
-- A Lovelace card for live position and tapping rooms. A separate repo, as HACS requires: `tuya-vacuum-local-map-card` with `tuya-vacuum-local-map-card.js`.
-- A localtuya event source for vacuums that only allow one connection. localtuya fires `localtuya_device_dp_triggered` with `dp` and `value`, but only when exactly one DP changed in a message and only once #901 has shipped. Whether raw DPs without a configured entity get through is untested. Put it behind the same interface as `connection.py`.
-- Zones from the 21003 echo.
-- Room commands, starting with one approved write test (AGENTS.md rule 2).
+See [IDEAS.md](IDEAS.md): a Lovelace card, a localtuya event source, zones, room commands, and other things that are written down and not planned.
 
 ## Risks
 

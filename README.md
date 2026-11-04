@@ -106,6 +106,7 @@ uv venv && uv pip install -e ".[test]"
 
 - [docs/PLAN.md](docs/PLAN.md): what was built, in order, and what is still unchecked
 - [docs/PROTOCOL.md](docs/PROTOCOL.md): the message formats, and how sure we are of each
+- [docs/IDEAS.md](docs/IDEAS.md): things that came up and are not planned
 - [AGENTS.md](AGENTS.md): rules for working in this repo
 - `custom_components/tuya_vacuum_local_map/core/` has no Home Assistant imports and is tested without it.
 - `tools/make_sample_map.py` and `tools/make_icon.py` regenerate the sample image and the icon from made-up data.
