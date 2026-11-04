@@ -17,6 +17,7 @@ import logging
 import os
 import random
 import time
+import tracemalloc
 
 import pytest
 import tinytuya
@@ -140,7 +141,19 @@ async def test_soak(hass, vacuum, monkeypatch, caplog, hass_storage):
             )
             await asyncio.sleep(1)
 
+    tracing = bool(os.environ.get("SOAK_TRACEMALLOC"))
+    halfway = None
+    if tracing:
+        tracemalloc.start(8)
+
+    async def snapshot_halfway():
+        nonlocal halfway
+        await asyncio.sleep(SECONDS / 2)
+        halfway = tracemalloc.take_snapshot()
+
     sampler = hass.async_create_background_task(sample(), "soak sampler")
+    if tracing:
+        hass.async_create_background_task(snapshot_halfway(), "soak halfway")
     started = time.monotonic()
     await hass.async_add_executor_job(drive)
     await asyncio.sleep(IDLE_FOR_TEST + 2)  # let the last run be counted
@@ -168,6 +181,20 @@ async def test_soak(hass, vacuum, monkeypatch, caplog, hass_storage):
         f"entity updates {coordinator.notify_count}, state changes {len(changes)}, "
         f"covered cells {coordinator.grid.covered_cells()}"
     )
+
+    if tracing and halfway is not None:
+        # Where Python memory grew between the halfway point and the end: sizes and
+        # source lines only.
+        growth = tracemalloc.take_snapshot().compare_to(halfway, "lineno")
+        print("  top growth since halfway (KB, source line):")
+        for stat in growth[:8]:
+            frame = stat.traceback[0]
+            where = frame.filename.split("site-packages/")[-1].split(
+                "ha-tuya-vacuum-local-map/"
+            )[-1]
+            kb, objects = stat.size_diff / 1024, stat.count_diff
+            print(f"    {kb:+8.0f} KB {objects:+6d} objs  {where}:{frame.lineno}")
+        tracemalloc.stop()
 
     # --- what must hold
     assert state["runs"] >= 1 and state["messages"] > 50
