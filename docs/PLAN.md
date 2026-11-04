@@ -309,7 +309,8 @@ Options flow: hidden rooms, brush width (default 300), units per metre (default 
 - Entities update at most once a second, the image is redrawn at most every 30 s (the first change after a quiet spell redraws at once) and when a run ends, and a burst of 200 frames produced fewer than 12 state changes in a test.
 - `async_remove_entry` deletes the stored map: it shows the layout of a home.
 - The live position is still not drawn (phase 5), and `Room` positions are still unknown.
-- **Not done:** the SVG-in-a-picture-card check on a real dashboard, in the browser and in the app. It needs a person. If it fails, switch `render.py` to PNG (Pillow) and update this plan.
+- **The SVG in a picture card, checked in a real browser.** A real Home Assistant 2026.2.3 process (installed in a scratch venv, with the frontend), the integration set up through the config-flow REST API against the fake vacuum, a `picture-entity` card on a dashboard, and headless Chromium (Playwright) logged in as a user. The image request returned `200 image/svg+xml`, the `<img>` loaded, and the map, the room label, the trail and the position dot painted in the light theme, the dark theme and a phone-sized viewport (iPhone 13 emulation). An SVG with a `viewBox` and no `width` or `height` scales to the card width, so nothing needs changing. The map and the sensors also survived four restarts of that Home Assistant. **Not covered:** the native Home Assistant app (its webview is a different engine) and a real vacuum.
+- **The recorder, measured in that same run:** the largest attribute blob stored for any of the entities was 101 bytes, so no frames, paths or room lists reach the database. But `run_points` writes a state row about once a second while a run is under way (60 rows in 2.5 minutes), which is more than a normal sensor does. It is bounded (about an hour of cleaning a day is a few thousand small rows), but it could update every 10 s or so instead.
 
 **Tests:** frames through to entity state; restart restores the map; `mapId` change resets it; rate limits with a burst of frames; diagnostics contain nothing redacted; a corrupt store starts empty.
 
@@ -363,6 +364,6 @@ Options flow: hidden rooms, brush width (default 300), units per metre (default 
 | Other models don't accept a second connection | Clear repair issue explaining it, then the localtuya event source above |
 | Another integration updates tinytuya past our range | Range upper bound is `<2`, so only a major version conflicts. Watch for it |
 | Firmware changes the message format | Decoder never raises, and diagnostics show unknown types |
-| SVG doesn't display everywhere | Checked first thing in phase 4; PNG is the fallback |
+| SVG doesn't display everywhere | Checked in headless Chromium in a real Home Assistant (light, dark, phone-sized); the native app is not checked. PNG is the fallback |
 | Room IDs change on a remap | `mapId` change resets the data |
 | `mapId` changes without a real remap, and wipes coverage | Keep the previous grid for one generation in storage, so it can be restored by hand |

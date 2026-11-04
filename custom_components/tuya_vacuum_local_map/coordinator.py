@@ -55,7 +55,7 @@ from .core.protocol import (
 )
 from .core.render import RenderInput, render_svg
 from .core.rooms import RoomLayer
-from .core.runs import RunTracker
+from .core.runs import IDLE_SECONDS, RunTracker
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -121,7 +121,7 @@ class Coordinator:
         self.save_count = 0
 
         self.grid = CoverageGrid(brush=self.brush)
-        self.tracker = RunTracker(self.grid)
+        self.tracker = RunTracker(self.grid, idle_seconds=IDLE_SECONDS)
         self._map_hash: str | None = None
         self._previous_grid: bytes | None = None  # one generation back, by hand
         self._stored_last_run: list[list[Point]] = []
@@ -263,7 +263,9 @@ class Coordinator:
         except (ValueError, TypeError, binascii.Error):
             _LOGGER.warning("The stored room outlines could not be read, starting over")
             self.layer = RoomLayer()
-        self.tracker = RunTracker(grid, finished_ids=finished)
+        self.tracker = RunTracker(
+            grid, finished_ids=finished, idle_seconds=IDLE_SECONDS
+        )
         self.rooms = rooms
         self._stored_last_run = last_run
         self._stored_points = points
@@ -371,7 +373,11 @@ class Coordinator:
             self._previous_grid = self.grid.to_bytes()
         self.grid = CoverageGrid(brush=self.brush)
         # The run IDs stay, so the app re-sending the last run isn't counted again.
-        self.tracker = RunTracker(self.grid, finished_ids=self.tracker.finished_ids)
+        self.tracker = RunTracker(
+            self.grid,
+            finished_ids=self.tracker.finished_ids,
+            idle_seconds=IDLE_SECONDS,
+        )
         self._stored_last_run = []
         self._stored_points = 0
         self._stored_path_id = None
