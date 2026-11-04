@@ -46,6 +46,14 @@ def repo(tmp_path, monkeypatch):
     return tmp_path
 
 
+PR_REF = "refs/pull/1/merge"
+
+
+def in_pull_request(monkeypatch, ref=PR_REF):
+    monkeypatch.setenv("GITHUB_EVENT_NAME", "pull_request")
+    monkeypatch.setenv("GITHUB_REF", ref)
+
+
 def merge(repo, email):
     git(repo, "merge", "-q", "--no-ff", "-m", "merge", "side", email=email,
         committer="noreply@github.com")  # fmt: skip
@@ -67,10 +75,15 @@ def test_the_pull_request_merge_commit_is_skipped_only_in_a_pull_request(
 ):
     merge(repo, PRIVATE)  # what GitHub builds: the opener's email as author
     monkeypatch.delenv("GITHUB_EVENT_NAME", raising=False)
-    assert PRIVATE in check_private.commit_emails()  # a push, or a real merge
+    assert PRIVATE in check_private.commit_emails()  # not CI at all
     monkeypatch.setenv("GITHUB_EVENT_NAME", "push")
-    assert PRIVATE in check_private.commit_emails()
-    monkeypatch.setenv("GITHUB_EVENT_NAME", "pull_request")
+    monkeypatch.setenv("GITHUB_REF", "refs/heads/main")
+    assert PRIVATE in check_private.commit_emails()  # a push to main
+    in_pull_request(monkeypatch, ref="refs/heads/feature")
+    assert (
+        PRIVATE in check_private.commit_emails()
+    )  # a pull request, but not the merge ref
+    in_pull_request(monkeypatch)
     assert check_private.commit_emails() == {NOREPLY}
 
 
@@ -79,13 +92,31 @@ def test_a_real_merge_commit_further_back_is_still_checked(repo, monkeypatch):
     (repo / "d").write_text("d")
     git(repo, "add", "d")
     git(repo, "commit", "-q", "-m", "after")  # HEAD is now an ordinary commit
-    monkeypatch.setenv("GITHUB_EVENT_NAME", "pull_request")
+    in_pull_request(monkeypatch)
     assert PRIVATE in check_private.commit_emails()
 
 
-def test_a_pull_request_head_that_is_not_a_merge_is_fully_checked(repo, monkeypatch):
+def test_on_the_merge_ref_head_is_skipped_whatever_it_is(repo, monkeypatch):
     (repo / "c").write_text("c")
     git(repo, "add", "c")
     git(repo, "commit", "-q", "-m", "three", email=PRIVATE)
-    monkeypatch.setenv("GITHUB_EVENT_NAME", "pull_request")
+    in_pull_request(monkeypatch)
+    # the ref says "merge commit", but HEAD is skipped regardless: that is why CI must
+    # check out the merge ref and nothing else. Here HEAD is the private commit.
+    assert PRIVATE not in check_private.commit_emails()
+    assert check_private.commit_emails() == {NOREPLY}
+
+
+def test_a_shallow_checkout_of_the_merge_commit_is_handled(repo, monkeypatch, tmp_path):
+    """actions/checkout fetches depth 1 by default: the merge commit shows no
+    parents there, which is what defeated detecting it by its parents."""
+    merge(repo, PRIVATE)
+    clone = tmp_path / "clone"
+    subprocess.run(
+        ["git", "clone", "-q", "--depth", "1", f"file://{repo}", str(clone)], check=True
+    )
+    monkeypatch.setattr(check_private, "ROOT", clone)
+    in_pull_request(monkeypatch)
+    assert PRIVATE not in check_private.commit_emails()
+    monkeypatch.delenv("GITHUB_EVENT_NAME")
     assert PRIVATE in check_private.commit_emails()
