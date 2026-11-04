@@ -1,0 +1,50 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to your vacuum",
+        "description": "Enter the vacuum's address on your network and its Tuya device ID and local key. The local key is a 16-character secret that only the Tuya cloud holds: you can get it with the tinytuya wizard or the Tuya developer platform. This integration only listens: it never sends commands. If another integration already uses the vacuum, the vacuum must allow a second connection.",
+        "data": {
+          "host": "IP address or host name",
+          "device_id": "Device ID",
+          "local_key": "Local key",
+          "version": "Protocol version"
+        },
+        "data_description": {
+          "host": "Give the vacuum a fixed address in your router so it doesn't change.",
+          "version": "3.3 for most vacuums. If the connection fails with a wrong-key error even though the key is right, try 3.4 or 3.5."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not connect to the vacuum. Check the address, and that it is on and on your network.",
+      "invalid_auth": "The vacuum answered, but the local key or protocol version looks wrong. The key must be 16 characters."
+    },
+    "abort": {
+      "already_configured": "This vacuum is already set up."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Map options",
+        "data": {
+          "hidden_rooms": "Hidden rooms",
+          "brush": "Brush width",
+          "units_per_metre": "Units per metre"
+        },
+        "data_description": {
+          "hidden_rooms": "Rooms the vacuum detected but never goes to, such as a balcony. They are left out of the map.",
+          "brush": "Width of the cleaned strip in the vacuum's own units. 300 is 30 cm if the units are millimetres.",
+          "units_per_metre": "How many of the vacuum's units make one metre. 1000 if they are millimetres."
+        }
+      }
+    }
+  },
+  "issues": {
+    "connection_stalled": {
+      "title": "The vacuum has not accepted a connection for a while",
+      "description": "Tuya Vacuum Local Map has not been able to connect for more than ten minutes. If the vacuum is on and on your network, it may only accept one local connection at a time, and another app or integration is using it. Close the other connection, or check the address and local key."
+    }
+  }
+}

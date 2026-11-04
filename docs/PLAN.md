@@ -26,7 +26,8 @@ custom_components/tuya_vacuum_local_map/
   manifest.json
   const.py
   config_flow.py     host, device ID, local key, protocol version; options
-  connection.py      worker thread around tinytuya
+  connection.py      worker thread around tinytuya (no HA imports)
+  hub.py             owns the connection for an entry, hands data to the event loop
   coordinator.py     feeds frames into core, owns state and storage
   image.py           the map
   sensor.py          rooms, current run
@@ -251,6 +252,18 @@ Fields: host, device ID, local key, protocol version (3.1, 3.3, 3.4, 3.5, defaul
 - Explain in the form text where to get the local key, and that the vacuum must allow a second connection if another integration is using it.
 
 Options flow: hidden rooms, brush width (default 300), units per metre (default 1000).
+
+**What the code settled (written against tinytuya 1.20.0's source):**
+
+- Failures come back as `{"Err": "<code>"}` with the code as a *string*, not as exceptions. In receive mode a timeout is `None`, and no `Err` code means idle: `ERR_TIMEOUT` (902) is only returned on the send path (`status()`), so any `Err` seen while receiving is a real failure and reconnects.
+- `914` (key or version) and `904` (payload that won't decode, which `status()` itself blames on key or version) mean a wrong key or protocol version: the flow shows `invalid_auth`. Every other code, `None`, and any exception show `cannot_connect`.
+- `connection.py` imports nothing from Home Assistant and takes callbacks that run on its thread. `hub.py` does the handover with `call_soon_threadsafe`, so the thread can be tested with a fake `Device` and no HA.
+- The device is wrapped (`ReadOnlyDevice`) so that only `status`, `heartbeat`, `receive`, `set_socketTimeout` and `close` can be called; anything else raises. A test also checks that those names exist on the real `tinytuya.Device`.
+- A connection that worked and then dropped resets the backoff to 5 s. (A test caught the first version never resetting it.)
+- The repair issue is raised after 600 s without a connection (`STALLED_AFTER`) and removed on recovery or unload. The thread is a daemon, and `stop()` closes the socket to wake a blocked read, so unload doesn't wait out the 5 s socket timeout.
+- `hub.py` keeps only what the flows need (connection state, rooms merged by ID, a count of frames by type). Phase 4's coordinator takes over the routing. The options flow lists the rooms from the hub, and rooms already hidden stay selectable.
+- `tinytuya` is imported in the import executor (`async_add_import_executor_job`), not in the event loop.
+- Not done: nothing has run against a real vacuum or a real Home Assistant instance. The fakes follow tinytuya's source, not its behaviour on the wire.
 
 **Tests** (`pytest-homeassistant-custom-component`, fake `Device`): flow success and each error; reconnect after a failure; error dict handled; clean unload stops the thread; read-only test above.
 

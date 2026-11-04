@@ -1,11 +1,16 @@
 {
   "domain": "tuya_vacuum_local_map",
   "name": "Tuya Vacuum Local Map",
-  "codeowners": ["@marcoschicote"],
+  "codeowners": [
+    "@marcoschicote"
+  ],
+  "config_flow": true,
   "documentation": "https://github.com/marcoschicote/ha-tuya-vacuum-local-map",
   "integration_type": "device",
   "iot_class": "local_push",
   "issue_tracker": "https://github.com/marcoschicote/ha-tuya-vacuum-local-map/issues",
-  "requirements": ["tinytuya>=1.20.0,<2"],
+  "requirements": [
+    "tinytuya>=1.20.0,<2"
+  ],
   "version": "0.0.0"
 }

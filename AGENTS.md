@@ -36,4 +36,4 @@ Things that nearly went wrong, kept here because they will again. None of them i
 - **Shifting or scaling a real map still shows the home's layout.** Generate made-up coordinates for fixtures and samples.
 - **Look at the real thing before writing about it.** Several message shapes here came from notes, and the raw captures were gone. Keep anonymised fixtures, so the formats stay checkable.
 
-Home Assistant tests (phase 3 onwards) also need `pytest-homeassistant-custom-component`.
+Home Assistant tests (phase 3 onwards, in `tests/ha/`) need `pytest-homeassistant-custom-component` and `tinytuya`, which the `test` extra installs. Without Home Assistant, `pytest` skips `tests/ha/` and the core tests still run.
