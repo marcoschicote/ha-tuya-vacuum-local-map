@@ -37,7 +37,8 @@ custom_components/tuya_vacuum_local_map/
   brand/icon.png
   core/
     protocol.py      frames and room names
-    path.py          assembling chunks into runs
+    path.py          assembling chunks into one run
+    runs.py          deciding when runs end, counting each once
     grid.py          coverage grid
     render.py        SVG output
 tests/
@@ -108,7 +109,8 @@ Rules:
 
 - **Never raise on device data.** Anything malformed returns `None`. The vacuum's firmware is outside our control, and a bad message must not kill the connection, which is exactly the bug in #900.
 - A non-string DP value returns `None` straight away. A value too short or not base64 returns `None` without logging.
-- Allow extra fields, and missing `message`, `ts` and `dInfo`. Read only what's needed: never copy `userId`, `sn` or `dInfo` into a `Frame`, an entity, a log line or diagnostics (PROTOCOL, "Recognising a frame").
+- Allow extra fields, and missing `message`, `ts` and `dInfo`. Read only what's needed: never copy `userId`, `sn` or `dInfo` into a `Frame`, an entity, a log line or diagnostics (PROTOCOL, "Recognising a frame"). `Frame.data` keeps `mapId` (the room list needs it) but is left out of the dataclass's `repr`.
+- `parse_rooms` returns `None` without an integer `mapId`, and skips entries without an integer `id` and a string `name`.
 - Empty chunks (`pointCounts` 0) are valid.
 
 **Tests:** every fixture; the real Nova frame in `fixtures/frames.json`; the name table in PROTOCOL.md; garbage input (not base64, base64 of non-JSON, JSON list, missing fields, wrong types, non-integer points).
@@ -132,19 +134,24 @@ class RunAssembler:
 - Store points by index (`dict[int, point]`), because chunks repeat and overlap. `points[chunk.start + i] = p`. In the capture every re-sent point was identical, but keep the latest anyway.
 - `path_id` is the run's start time in Unix seconds, so keep it as the run's `started`.
 - A different `path_id` starts a new run. The caller finishes the old one first (see below).
+- `add()` returns whether the chunk brought any new or changed point. A re-send of known points returns `False`, which is how the tracker tells progress from a re-send and times the 120 s.
 - `segments()` splits the path where indexes are missing, since chunks are lost if the connection drops, and where consecutive points jump more than `MAX_JUMP` (1500 units). Never draw a line across a gap: it'd paint coverage through a wall.
 - Ignore points whose index is far beyond `total`, as a sanity limit.
 
 **When a run ends:** a new `pathID` arrives, or no new point has arrived for 120 s. Don't rely on state DPs, which differ by model. An idle gap is safe: if chunks resume with the same `pathID`, reopen the run, and let the grid handle it (next section).
 
-**Re-sent runs:** opening the app's map screen re-sends the previous run whole, as one chunk. A re-send of a run we already recorded must not count as a second cleaning: keep the IDs of the last 50 finished runs (persisted), and ignore chunks for those, except to add points that weren't received before. But if its `pathID` is unknown, it's a complete run we missed (the integration was down, or the connection dropped): record it as a run of its own.
+**Re-sent runs (`core/runs.py`, added to the plan):** `RunAssembler` only holds one run's points. A second class, `RunTracker(grid, finished_ids)`, sits on top: it takes `add(chunk, now)`, `poll(now)` and `flush()`, with the clock passed in, and adds each run to the grid exactly once. It keeps the last three runs' points in memory, so a run that resumes after an idle gap grows without being counted twice: `CoverageGrid.add_run` takes the cells it returned last time and only counts new ones (this is what "let the grid handle it" means). Opening the app's map screen re-sends the previous run whole, as one chunk. A re-send of a run we already recorded must not count as a second cleaning: keep the IDs of the last 50 finished runs (persisted), and ignore chunks for those, except to add points that weren't received before. But if its `pathID` is unknown, it's a complete run we missed (the integration was down, or the connection dropped): record it as a run of its own.
 
 ### `grid.py`
 
 ```python
 class CoverageGrid:
     def __init__(self, cell: int = 50, brush: int = 300) -> None: ...
-    def add_run(self, segments: list[list[tuple[int, int]]]) -> None: ...
+    def add_run(
+        self,
+        segments: list[list[tuple[int, int]]],
+        already: frozenset[tuple[int, int]] = frozenset(),
+    ) -> frozenset[tuple[int, int]]: ...
     def bounds(self) -> tuple[int, int, int, int] | None: ...
     def covered_cells(self) -> int: ...
     def to_bytes(self) -> bytes: ...
@@ -155,6 +162,8 @@ class CoverageGrid:
 - Units are the device's own. `cell` and `brush` are in those units (50 and 300 are 5 cm and 30 cm if units are mm).
 - Stamp a disc of `brush` diameter at steps along each segment, no further apart than `cell`. Dedupe the stamps into a set per run, then add 1 (saturating at 255) to each cell in the set, so a value means "cleaned in N runs".
 - A sparse store is fine, such as a dict of `(x, y) -> count` or fixed tiles. Don't allocate a dense array from `bounds()`, since one bad point would make it enormous. Drop points outside ±100,000 units for the same reason.
+- `add_run` returns the cells covered; pass them back as `already` if the run grows. Also available: `count(x, y)`, `cells()`, `stamp(segments)`.
+- `from_bytes` raises `ValueError` on corrupt data (it reads our own file, not the device): the coordinator catches it and starts empty.
 - `to_bytes` must round-trip and be compact: zlib over a simple packed form, with a leading version byte so the format can change later.
 - Expect up to about 160,000 cells (a 20 × 20 m home). Stamping a whole run must stay under 1 s on a Raspberry Pi class CPU, so precompute the disc's cell offsets once.
 
@@ -180,12 +189,12 @@ def render_svg(data: RenderInput) -> bytes: ...
   <path fill="#4a90d9" fill-opacity=".35" d="M100 200h450v50h-450zM100 250h600v50h-600z"/>
   ```
 
-- Then the last run as a thin `<polyline>` per segment and the position as a small circle. No room labels yet: the room list has no positions. Phase 5 adds them from the learned outlines.
+- Then the last run as a thin `<polyline>` per segment and the position as a small circle. No room labels yet: the room list has no positions. Phase 5 adds them from the learned outlines. Until then the visible room names go in a `<desc>` element (which is also where the escaping test has something to bite on).
 - Skip rooms in `hidden_rooms` once labels exist. Some detected rooms are places the vacuum never goes, like a balcony.
 - **Escape room names with `xml.sax.saxutils.escape`.** They come from the network.
 - Keep colours readable on both light and dark dashboards: transparent background, and labels with a contrasting outline (`paint-order: stroke`).
 - With no data, return a valid small SVG saying that no runs are recorded yet.
-- Keep a whole-home map under 500 KB. If it isn't, merge rows further or double the render cell size.
+- Keep a whole-home map under 500 KB. If it isn't, merge rows further or double the render cell size (`render_svg` doubles it up to three times). The SVG has a `viewBox` and no `width` or `height`: check in phase 4 how the card sizes it.
 
 **Tests:** overlapping and repeated chunks; gaps and jumps produce separate segments; a repeated run isn't double counted; grid round-trip; one absurd point doesn't blow up memory; the y flip, with a point known to be top right; hostile room name `<script>` comes out escaped; output parses with `xml.etree`; size budget against a simulated 3000-point run. Save one rendered sample to `docs/`, drawn from a simulated run and not a real home, so a person can look at it.
 
