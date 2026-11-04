@@ -347,7 +347,7 @@ Options flow: hidden rooms, brush width (default 300), units per metre (default 
 
 **Not done, waiting on a tested integration (the owner decides when):**
 
-- **A release.** `version` in the manifest is still `0.0.0`. Tag only after the 24-hour hold and a real run, with `version` set to match the tag.
+- **A full release.** `0.1.0-alpha.1` is tagged as a pre-release so the real-vacuum test (docs/TESTING.md) runs on a known version. Tag a full release only after the 24-hour hold and a real run, with `version` in the manifest set to match the tag.
 - **Repository settings** HACS needs: description and topics (such as `home-assistant`, `hacs`, `tuya`, `vacuum`). Public or private is the owner's call (AGENTS.md).
 - **Outward steps, only after testing and only with the owner's OK:** ask whether a Kabum Smart 900 owner (MaikeMota, on [#900](https://github.com/xZetsubou/hass-localtuya/issues/900)) would test it, reply on [tuya-local #288](https://github.com/make-all/tuya-local/issues/288) that it exists, and submit to the HACS default list. The text gets shown to the owner before anything is posted (AGENTS.md rule 7).
 
