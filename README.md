@@ -106,6 +106,7 @@ uv venv && uv pip install -e ".[test]"
 
 - [docs/PLAN.md](docs/PLAN.md): what was built, in order, and what is still unchecked
 - [docs/PROTOCOL.md](docs/PROTOCOL.md): the message formats, and how sure we are of each
+- [docs/TESTING.md](docs/TESTING.md): how to test on a real vacuum, and a table of results
 - [docs/IDEAS.md](docs/IDEAS.md): things that came up and are not planned
 - [AGENTS.md](AGENTS.md): rules for working in this repo
 - `custom_components/tuya_vacuum_local_map/core/` has no Home Assistant imports and is tested without it.
