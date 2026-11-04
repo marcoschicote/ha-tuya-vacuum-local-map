@@ -31,6 +31,13 @@ def git(repo, *args, email=NOREPLY, committer=None):
     ).stdout
 
 
+@pytest.fixture(autouse=True)
+def _outside_ci(monkeypatch):
+    """CI sets these for the whole job: each test sets what it needs."""
+    monkeypatch.delenv("GITHUB_EVENT_NAME", raising=False)
+    monkeypatch.delenv("GITHUB_REF", raising=False)
+
+
 @pytest.fixture
 def repo(tmp_path, monkeypatch):
     git(tmp_path, "init", "-q", "-b", "main")
