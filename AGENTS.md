@@ -25,4 +25,15 @@ uv venv && uv pip install -e ".[test]"
 
 `check_private.py` scans tracked and staged files, commit messages and git emails for things that look like private data. A fresh clone needs `git config user.email` set to a GitHub noreply address first, since a machine's default email can reveal its hostname. CI runs it too, but by then it's already public, so run it first. For the owner's own values, it also reads `.private-terms`, a git-ignored file with one term per line. Never commit that file, and never copy its contents anywhere.
 
+## Lessons from setting this up
+
+Things that nearly went wrong, kept here because they will again. None of them involve real values, and none should.
+
+- **A machine's default git email can reveal its hostname and network name.** It lands in every commit and in public searches by email. Use a GitHub noreply address, set in `git config --global user.email`, before the first commit. The check fails on any other email.
+- **Rewriting history is not an undo.** A pushed commit can stay reachable by its ID for a while. Prevent leaks instead of cleaning them up, and let the owner decide how to clean up.
+- **Scripts written against a real device tend to have its ID, host or key hardcoded.** Take them from environment variables, as `tools/capture.py` does.
+- **Command output ends up in logs and transcripts.** Don't print device IDs, keys or hosts, not even while debugging.
+- **Shifting or scaling a real map still shows the home's layout.** Generate made-up coordinates for fixtures and samples.
+- **Look at the real thing before writing about it.** Several message shapes here came from notes, and the raw captures were gone. Keep anonymised fixtures, so the formats stay checkable.
+
 Home Assistant tests (phase 3 onwards) also need `pytest-homeassistant-custom-component`.
