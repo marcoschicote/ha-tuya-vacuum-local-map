@@ -149,15 +149,17 @@ async def test_soak(hass, vacuum, monkeypatch, caplog, hass_storage):
     elapsed = time.monotonic() - started
 
     # --- what it did
-    first_quarter = samples[len(samples) // 4]
     last = samples[-1]
     seconds = max(elapsed, 1)
     print(
         f"\nsoak: {elapsed:.0f} s, {state['runs']} runs, {state['messages']} messages, "
         f"{state['drops']} dropped connections, {vacuum.connections} connections"
     )
+    quarters = [samples[int(len(samples) * f) - 1]["rss"] for f in (0.25, 0.5, 0.75, 1)]
     print(
-        f"  memory {first_quarter['rss']:.0f} -> {last['rss']:.0f} MB, "
+        "  memory at 25/50/75/100%: "
+        + " / ".join(f"{m:.0f}" for m in quarters)
+        + " MB, "
         f"threads {samples[0]['threads']} -> {last['threads']}, "
         f"tasks {samples[0]['tasks']} -> {last['tasks']}"
     )
@@ -182,12 +184,16 @@ async def test_soak(hass, vacuum, monkeypatch, caplog, hass_storage):
     # nothing piles up
     assert last["threads"] <= samples[0]["threads"] + 2
     assert last["tasks"] <= samples[0]["tasks"] + 5
-    assert last["rss"] - first_quarter["rss"] < 40, "memory is growing"
-    # the rate limits hold, however fast the vacuum talks
-    assert coordinator.notify_count <= seconds * 1.2 + 10
+    # warm-up is allowed; steady growth in the second half is not
+    assert quarters[3] - quarters[1] < 25, f"memory is growing: {quarters}"
+    # the rate limits hold, however fast the vacuum talks. Frame traffic updates the
+    # entities at most once a second; a connection change and a finished drawing are
+    # sent at once, on top of that.
+    extras = 2 * state["drops"] + coordinator.render_count
+    assert coordinator.notify_count <= seconds + extras + 10
     assert coordinator.render_count <= state["runs"] * 3 + seconds / 30 + 5
     assert coordinator.save_count <= state["runs"] * 2 + seconds / 30 + 5
-    assert len(changes) <= 7 * (seconds * 1.2 + 10)  # seven entities, once a second
+    assert len(changes) <= 7 * (seconds + extras + 10)  # seven entities
     # the map is bounded, and it did get built
     assert 0 < coordinator.grid.covered_cells() < 200_000
     assert len(coordinator.tracker._runs) <= 3
