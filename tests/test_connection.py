@@ -103,7 +103,14 @@ def test_only_status_heartbeat_receive_are_ever_called(conns):
     assert wait_for(
         lambda: len(factory.made) >= 2 and "heartbeat" in factory.made[1].calls
     )
-    allowed = {"status", "receive", "heartbeat", "set_socketTimeout"}
+    allowed = {
+        "status",
+        "receive",
+        "heartbeat",
+        "set_socketTimeout",
+        "set_socketRetryLimit",
+        "set_socketRetryDelay",
+    }
     for device in factory.made:
         assert set(device.calls) <= allowed, device.calls
 
@@ -359,7 +366,13 @@ def factory_for(device):
 def test_probe_succeeds_on_a_normal_reply():
     device = FakeDevice()
     probe(DEVICE_ID, HOST, KEY, 3.3, factory_for(device))
-    assert device.closed.is_set() and device.calls == ["set_socketTimeout", "status"]
+    assert device.closed.is_set()
+    assert device.calls == [
+        "set_socketTimeout",
+        "set_socketRetryLimit",
+        "set_socketRetryDelay",
+        "status",
+    ]
 
 
 @pytest.mark.parametrize(

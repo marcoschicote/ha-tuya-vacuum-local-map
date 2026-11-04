@@ -47,6 +47,12 @@ class FakeDevice:
     def set_socketTimeout(self, seconds):
         self.calls.append("set_socketTimeout")
 
+    def set_socketRetryLimit(self, limit):
+        self.calls.append("set_socketRetryLimit")
+
+    def set_socketRetryDelay(self, delay):
+        self.calls.append("set_socketRetryDelay")
+
     def close(self):
         self.closed.set()
 

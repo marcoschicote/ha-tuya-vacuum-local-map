@@ -338,7 +338,14 @@ async def test_reset_clears_local_data_and_sends_nothing(hass, clock, factory):
     await end_run(hass, entry, clock)
     assert coordinator.grid.covered_cells() == 0
     await hass.config_entries.async_unload(entry.entry_id)
-    allowed = {"status", "receive", "heartbeat", "set_socketTimeout"}
+    allowed = {
+        "status",
+        "receive",
+        "heartbeat",
+        "set_socketTimeout",
+        "set_socketRetryLimit",
+        "set_socketRetryDelay",
+    }
     for device in factory.made:
         assert set(device.calls) <= allowed
 
