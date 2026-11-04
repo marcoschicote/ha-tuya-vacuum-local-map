@@ -29,6 +29,11 @@ jobs:
       - uses: home-assistant/actions/hassfest@master
 
   hacs:
+    # The HACS action refuses private repositories ("can only validate public
+    # repositories"), so this job is skipped while the repo is private and starts
+    # running once it is public. A skipped job shows as passing: until then, HACS
+    # validation has not happened.
+    if: ${{ !github.event.repository.private }}
     runs-on: ubuntu-latest
     steps:
       - uses: hacs/action@main

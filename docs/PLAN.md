@@ -335,7 +335,7 @@ Options flow: hidden rooms, brush width (default 300), units per metre (default 
 **Done in this repo:**
 
 - `brand/icon.png` (256 px) and `icon@2x.png` (512 px), drawn by `tools/make_icon.py` from made-up shapes.
-- The [HACS action](https://www.hacs.xyz/docs/publish/action/) in CI (`hacs` job), next to hassfest. It has never run: it needs a GitHub repository description and topics, which are repository settings and not files, and it may refuse a private repo. Expect to adjust it on its first run.
+- The [HACS action](https://www.hacs.xyz/docs/publish/action/) in CI (`hacs` job), next to hassfest. The action refuses private repositories (it said so on the first run), so the job is skipped while the repo is private (`if: ${{ !github.event.repository.private }}`) and starts running once it is public. **A skipped job shows as passing, but HACS validation has not happened until it runs.** It also needs a repository description and topics, which are repository settings and not files. Expect to adjust it on its first real run.
 - `hacs.json` names the Home Assistant version it was tested on (2026.2.0) as the minimum. That is the tested version, not a measured lower bound.
 - README: what it does and doesn't, install, where to get the local key, options, the map card, limits, which vacuums, how to report a model with the diagnostics file, privacy, developer commands. It carries the simulated sample and says so.
 - Issue templates: a new-model report that asks for the diagnostics file and warns off keys and captures, and a bug report.

@@ -116,3 +116,9 @@ def test_the_readme_has_no_private_looking_values_and_links_resolve_locally():
     readme = (ROOT / "README.md").read_text()
     for target in re.findall(r"\]\((?!http|#)([^)\s]+)\)", readme):
         assert (ROOT / target).exists(), target
+
+
+def test_the_hacs_job_is_skipped_while_the_repo_is_private():
+    ci = (ROOT / ".github/workflows/ci.yml").read_text()
+    job = ci[ci.index("  hacs:") :]
+    assert "if: ${{ !github.event.repository.private }}" in job
