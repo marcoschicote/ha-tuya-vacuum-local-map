@@ -1,0 +1,59 @@
+name: Release
+
+# Run by hand from the Actions tab. It tags the commit it runs on and publishes a GitHub
+# release, but only if the version matches the manifest and the checks on that commit
+# are green. A version with a "-" in it (0.1.0-alpha.1) is published as a pre-release.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release, without the v (for example 0.1.0-alpha.1)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  checks: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ inputs.version }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the version
+        run: |
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]]; then
+            echo "::error::'$VERSION' is not a version like 1.2.3 or 1.2.3-alpha.1"
+            exit 1
+          fi
+          manifest=$(python3 -c "import json; print(json.load(open('custom_components/tuya_vacuum_local_map/manifest.json'))['version'])")
+          if [ "$manifest" != "$VERSION" ]; then
+            echo "::error::manifest.json says $manifest, not $VERSION. Update it first."
+            exit 1
+          fi
+          if git ls-remote --exit-code --tags origin "refs/tags/v$VERSION" >/dev/null; then
+            echo "::error::v$VERSION already exists"
+            exit 1
+          fi
+
+      - name: Check that CI is green on this commit
+        run: |
+          runs=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/check-runs" \
+            --jq '[.check_runs[] | select(.name == "test" or .name == "hassfest") | .conclusion] | join(" ")')
+          echo "test and hassfest: $runs"
+          if [ "$runs" != "success success" ]; then
+            echo "::error::test and hassfest must both have passed on this commit"
+            exit 1
+          fi
+
+      - name: Publish
+        run: |
+          flags=""
+          case "$VERSION" in *-*) flags="--prerelease" ;; esac
+          gh release create "v$VERSION" --target "$GITHUB_SHA" --title "$VERSION" \
+            --generate-notes $flags
