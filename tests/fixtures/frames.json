@@ -1,45 +1,45 @@
 [
   {
     "name": "path_chunk_nova",
-    "source": "Real frame, public: https://github.com/make-all/tuya-local/issues/1660",
+    "source": "SYNTHETIC: same structure as a frame reported publicly on the Nova (tuya-local #1660), every value made up",
     "dp": "102",
-    "b64": "eyJkYXRhIjp7InBhdGhJRCI6MTcwODAyMzQyNiwicG9pbnRDb3VudHMiOjgsInBvc0FycmF5IjpbWy0xOTExLC0xMzExXSxbLTE5NDcsLTEzMzFdLFstMTk5NSwtMTMzOV0sWy0yMDQ3LC0xMzM5XSxbLTIwOTksLTEzMzFdLFstMjE0MywtMTMxOV0sWy0yMTg3LC0xMzA3XSxbLTIyMjMsLTEyOTFdXSwic3RhcnRQb3MiOjk5LCJ0b3RhbFBvaW50cyI6MTA3fSwiaW5mb1R5cGUiOjIxMDExLCJtZXNzYWdlIjoib2siLCJ0cyI6MTcwODAyMzUwMn0=",
+    "b64": "eyJkYXRhIjp7InBhdGhJRCI6MTYwMDEwMDAwMCwicG9pbnRDb3VudHMiOjgsInBvc0FycmF5IjpbWzY0MCwtMjEwXSxbNjg0LC0yMjZdLFs3MzIsLTIzMl0sWzc4NCwtMjMyXSxbODM2LC0yMjRdLFs4ODAsLTIxMl0sWzkyNCwtMjAwXSxbOTYwLC0xODRdXSwic3RhcnRQb3MiOjk5LCJ0b3RhbFBvaW50cyI6MTA3fSwiaW5mb1R5cGUiOjIxMDExLCJtZXNzYWdlIjoib2siLCJ0cyI6MTYwMDEwMDA3Nn0=",
     "decoded": {
       "data": {
-        "pathID": 1708023426,
+        "pathID": 1600100000,
         "pointCounts": 8,
         "posArray": [
           [
-            -1911,
-            -1311
+            640,
+            -210
           ],
           [
-            -1947,
-            -1331
+            684,
+            -226
           ],
           [
-            -1995,
-            -1339
+            732,
+            -232
           ],
           [
-            -2047,
-            -1339
+            784,
+            -232
           ],
           [
-            -2099,
-            -1331
+            836,
+            -224
           ],
           [
-            -2143,
-            -1319
+            880,
+            -212
           ],
           [
-            -2187,
-            -1307
+            924,
+            -200
           ],
           [
-            -2223,
-            -1291
+            960,
+            -184
           ]
         ],
         "startPos": 99,
@@ -47,22 +47,22 @@
       },
       "infoType": 21011,
       "message": "ok",
-      "ts": 1708023502
+      "ts": 1600100076
     }
   },
   {
     "name": "status_nova",
-    "source": "Real decoded frame, public: https://github.com/make-all/tuya-local/issues/1660",
+    "source": "SYNTHETIC: same structure as a status reported publicly on the Nova (tuya-local #1660), every value made up",
     "dp": "102",
     "decoded": {
       "data": {
         "cleanArea": 11,
         "cleanTime": 570,
-        "elec": 82,
-        "elecReal": 82,
+        "elec": 80,
+        "elecReal": 80,
         "mode": "sweep",
         "subMode": "smart",
-        "timeStamp": 1708024009
+        "timeStamp": 1600100100
       },
       "infoType": 20001
     }

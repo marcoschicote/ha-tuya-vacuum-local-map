@@ -71,21 +71,21 @@ Unknown types must be ignored, and counted for diagnostics. Only these three wer
 
 ### 21011: path chunk
 
-A real frame, from a public report on the Nova ([tuya-local #1660](https://github.com/make-all/tuya-local/issues/1660)). **[Seen]**
+The structure of a frame reported publicly on the Nova ([tuya-local #1660](https://github.com/make-all/tuya-local/issues/1660)), with made-up values. **[Seen]**
 
 ```json
 {
   "data": {
-    "pathID": 1708023426,
+    "pathID": 1600100000,
     "pointCounts": 8,
-    "posArray": [[-1911, -1311], [-1947, -1331], [-1995, -1339], [-2047, -1339],
-                 [-2099, -1331], [-2143, -1319], [-2187, -1307], [-2223, -1291]],
+    "posArray": [[640, -210], [684, -226], [732, -232], [784, -232],
+                 [836, -224], [880, -212], [924, -200], [960, -184]],
     "startPos": 99,
     "totalPoints": 107
   },
   "infoType": 21011,
   "message": "ok",
-  "ts": 1708023502
+  "ts": 1600100076
 }
 ```
 
