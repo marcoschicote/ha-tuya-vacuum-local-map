@@ -1,4 +1,4 @@
-# Tuya Vacuum Coverage Map
+# Tuya Vacuum Local Map
 
 A Home Assistant integration that draws where a Tuya robot vacuum has cleaned, using only its local connection. No cloud, no Tuya account.
 

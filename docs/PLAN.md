@@ -21,7 +21,7 @@
 ## Target layout
 
 ```
-custom_components/tuya_vacuum_map/
+custom_components/tuya_vacuum_local_map/
   __init__.py        setup and unload of the config entry
   manifest.json
   const.py
@@ -65,7 +65,7 @@ The raw Rowenta captures weren't kept, so several shapes in PROTOCOL.md are only
   - What are the field names of the rectangles in `value`?
   - Do encoded names use Unicode code points?
   - Does the last-run re-send use the same `pathID` as the original run?
-- Add anonymised fixtures to `tests/fixtures/frames.json`. To anonymise: replace `mapId` and names, and shift and scale coordinates so the home's layout can't be recovered. Keep the structure and sizes. Check the result with the owner before committing.
+- Add anonymised fixtures to `tests/fixtures/frames.json`. **This repo is public, so this step is the one to get right.** Replace `mapId` and names. Don't just shift and scale coordinates, since the home's layout stays recognisable: keep the structure and sizes, but generate the points (a made-up room shape walked in lines). Show the owner the result and run `tools/check_private.py` before committing.
 - **Spike the image format.** In a throwaway custom integration on a test HA, return an SVG from an `ImageEntity` (`_attr_content_type = "image/svg+xml"`) and check it displays in a picture-entity card, in the app as well as the browser. If it doesn't, use PNG via Pillow in `render.py` and update this plan.
 
 **Done when:** every question above is answered and the spike has a result.
@@ -183,7 +183,7 @@ def render_svg(data: RenderInput) -> bytes: ...
 - With no data, return a valid small SVG saying that no runs are recorded yet.
 - Keep a whole-home map under 500 KB. If it isn't, merge rows further or double the render cell size.
 
-**Tests:** overlapping and repeated chunks; gaps and jumps produce separate segments; a repeated run isn't double counted; grid round-trip; one absurd point doesn't blow up memory; the y flip, with a point known to be top right; hostile room name `<script>` comes out escaped; output parses with `xml.etree`; size budget against a simulated 3000-point run. Save one rendered sample to `docs/` so a person can look at it.
+**Tests:** overlapping and repeated chunks; gaps and jumps produce separate segments; a repeated run isn't double counted; grid round-trip; one absurd point doesn't blow up memory; the y flip, with a point known to be top right; hostile room name `<script>` comes out escaped; output parses with `xml.etree`; size budget against a simulated 3000-point run. Save one rendered sample to `docs/`, drawn from a simulated run and not a real home, so a person can look at it.
 
 **Done when:** those pass and a person has looked at the sample image.
 
@@ -286,14 +286,14 @@ Options flow: hidden rooms, brush width (default 300), units per metre (default 
 ## Phase 6: ready for others
 
 - `brand/icon.png`.
-- Add the [HACS action](https://www.hacs.xyz/docs/publish/action/) to CI. It needs the repo to be public.
+- Add the [HACS action](https://www.hacs.xyz/docs/publish/action/) to CI, once the icon is in.
 - README: install steps, screenshot (anonymised, no real home), how to get the local key, limits, how to report a new model using diagnostics.
 - A release, with `version` in the manifest matching the tag.
-- **Ask the owner first**, then: make the repo public, try a second model (MaikeMota reported a Kabum Smart 900 with the same messages on [#900](https://github.com/xZetsubou/hass-localtuya/issues/900), so ask whether they would test it), reply on [tuya-local #288](https://github.com/make-all/tuya-local/issues/288) that it exists, and submit to the HACS default list.
+- **Ask the owner first**, then: try a second model (MaikeMota reported a Kabum Smart 900 with the same messages on [#900](https://github.com/xZetsubou/hass-localtuya/issues/900), so ask whether they would test it), reply on [tuya-local #288](https://github.com/make-all/tuya-local/issues/288) that it exists, and submit to the HACS default list.
 
 ## Later, not planned yet
 
-- A Lovelace card for live position and tapping rooms. A separate repo, as HACS requires: `tuya-vacuum-map-card` with `tuya-vacuum-map-card.js`.
+- A Lovelace card for live position and tapping rooms. A separate repo, as HACS requires: `tuya-vacuum-local-map-card` with `tuya-vacuum-local-map-card.js`.
 - A localtuya event source for vacuums that only allow one connection. localtuya fires `localtuya_device_dp_triggered` with `dp` and `value`, but only when exactly one DP changed in a message and only once #901 has shipped. Whether raw DPs without a configured entity get through is untested. Put it behind the same interface as `connection.py`.
 - Zones from the 21003 echo.
 - Room commands, starting with one approved write test (AGENTS.md rule 2).

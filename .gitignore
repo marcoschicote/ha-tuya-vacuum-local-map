@@ -10,5 +10,6 @@ htmlcov/
 # Raw device captures can hold device IDs, room names and home layouts.
 captures/
 .env
+.private-terms
 
 *.egg-info/

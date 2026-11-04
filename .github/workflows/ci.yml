@@ -17,6 +17,8 @@ jobs:
       - run: ruff check .
       - run: ruff format --check .
       - run: pytest
+      - run: git config user.email noreply@github.com
+      - run: python tools/check_private.py
 
   hassfest:
     runs-on: ubuntu-latest

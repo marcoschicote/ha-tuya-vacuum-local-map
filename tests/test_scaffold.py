@@ -7,7 +7,7 @@ import pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 FIXTURES = json.loads((ROOT / "tests/fixtures/frames.json").read_text())
-CORE = ROOT / "custom_components/tuya_vacuum_map/core"
+CORE = ROOT / "custom_components/tuya_vacuum_local_map/core"
 
 
 def test_fixture_base64_matches_decoded():
@@ -39,6 +39,6 @@ def test_core_does_not_import_home_assistant():
 
 
 def test_manifest_domain_matches_folder():
-    folder = ROOT / "custom_components/tuya_vacuum_map"
+    folder = ROOT / "custom_components/tuya_vacuum_local_map"
     manifest = json.loads((folder / "manifest.json").read_text())
     assert manifest["domain"] == folder.name

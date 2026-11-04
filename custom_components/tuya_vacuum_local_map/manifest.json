@@ -1,6 +1,6 @@
 {
-  "domain": "tuya_vacuum_map",
-  "name": "Tuya Vacuum Coverage Map",
+  "domain": "tuya_vacuum_local_map",
+  "name": "Tuya Vacuum Local Map",
   "codeowners": ["@marcoschicote"],
   "documentation": "https://github.com/marcoschicote/ha-tuya-vacuum-map",
   "integration_type": "device",
