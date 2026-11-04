@@ -195,6 +195,15 @@ class Coordinator:
         return self.tracker.point_count if self._live else self._stored_points
 
     @property
+    def run_active(self) -> bool:
+        """Whether a run is under way: points arrived and it hasn't gone quiet."""
+        return self.tracker.live_point() is not None
+
+    def now(self) -> float:
+        """The clock the rate limits use (seconds, steady)."""
+        return _monotonic()
+
+    @property
     def run_path_id(self) -> int | None:
         return self.tracker.path_id if self._live else self._stored_path_id
 

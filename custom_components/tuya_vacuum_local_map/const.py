@@ -23,3 +23,8 @@ STORAGE_VERSION = 1
 
 def storage_key(entry_id: str) -> str:
     return f"{DOMAIN}.{entry_id}"
+
+
+# While a run is under way, the "run points" sensor shows a fresh count at most this
+# often. It would otherwise change every second and fill the recorder's database.
+RUN_POINTS_INTERVAL = 10.0

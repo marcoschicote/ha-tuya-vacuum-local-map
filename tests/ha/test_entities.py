@@ -7,12 +7,14 @@ import pytest
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.helpers import entity_registry as er
 
+from custom_components.tuya_vacuum_local_map.const import RUN_POINTS_INTERVAL
 from custom_components.tuya_vacuum_local_map.diagnostics import (
     async_get_config_entry_diagnostics,
 )
 
 from ..fakes import DEVICE_ID, HOST, KEY, FakeDevice, wait_for
 from .common import (
+    CLOCK,
     ENTRY_ID,
     NS,
     STORE_KEY,
@@ -27,6 +29,8 @@ from .common import (
     setup_entry,
     state,
 )
+
+RUN = 1700000000
 
 
 @pytest.fixture(autouse=True)
@@ -67,6 +71,9 @@ async def test_a_run_shows_up_in_the_sensors_and_the_image(hass, hass_client, cl
     await feed(hass, entry, rooms_dps())
     await feed(hass, entry, chunk_dps(1700000000, 0, points[:20], total=len(points)))
     await feed(hass, entry, chunk_dps(1700000000, 20, points[20:]))
+    # during a run the count is shown every 10 s at most: let that time pass
+    CLOCK[0] += RUN_POINTS_INTERVAL
+    entry.runtime_data._notify()
     assert state(hass, "sensor", "run_points").state == str(len(points))
     attrs = state(hass, "sensor", "run_points").attributes
     assert attrs["path_id"] == 1700000000 and attrs["started"].startswith("2023-11-14")
@@ -529,3 +536,38 @@ async def test_a_change_is_saved_by_the_30_second_timer(hass, clock, hass_storag
     await hass.config_entries.async_unload(entry.entry_id)
     assert coordinator._save_timer is None
     assert set(hass_storage[STORE_KEY]["data"]["rooms"]) == {"1", "2", "3", "4"}
+
+
+# --- the run points sensor is not a firehose ---
+
+
+async def test_run_points_changes_at_most_every_10_seconds_during_a_run(hass, clock):
+    entry = await setup_entry(hass)
+    entity = entity_id(hass, "sensor", "run_points")
+    writes = []
+    hass.bus.async_listen(
+        "state_changed",
+        lambda e: writes.append(e) if e.data["entity_id"] == entity else None,
+    )
+    points = serpentine(8000, 4000)
+    for i in range(60):  # a point a second for a minute
+        await feed(hass, entry, chunk_dps(RUN, i, [points[i]], total=500), tick=1.0)
+    await hass.async_block_till_done(wait_background_tasks=True)
+    assert 3 <= len(writes) <= 8, len(writes)  # not 60
+    assert int(state(hass, "sensor", "run_points").state) <= 60
+
+    await end_run(hass, entry, clock)  # the run is over: the count is exact
+    assert state(hass, "sensor", "run_points").state == "60"
+    await hass.config_entries.async_unload(entry.entry_id)
+
+
+async def test_run_points_is_exact_when_a_new_run_starts(hass, clock):
+    entry = await setup_entry(hass)
+    points = serpentine()
+    await feed(hass, entry, chunk_dps(RUN, 0, points[:50], total=100))
+    await end_run(hass, entry, clock)
+    assert state(hass, "sensor", "run_points").state == "50"
+    await feed(hass, entry, chunk_dps(RUN + 1000, 0, points[:3], total=100))
+    assert state(hass, "sensor", "run_points").state == "3"  # at once, not in 10 s
+    assert state(hass, "sensor", "run_points").attributes["path_id"] == RUN + 1000
+    await hass.config_entries.async_unload(entry.entry_id)
