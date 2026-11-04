@@ -1,0 +1,79 @@
+"""Rooms, the current or last run, and the covered area."""
+
+from __future__ import annotations
+
+from datetime import UTC, datetime
+from typing import Any
+
+from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
+from homeassistant.const import EntityCategory, UnitOfArea
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+
+from .coordinator import Coordinator, TuyaVacuumConfigEntry
+from .entity import TuyaVacuumEntity
+
+
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: TuyaVacuumConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
+) -> None:
+    coordinator = entry.runtime_data
+    async_add_entities(
+        [
+            RoomsSensor(coordinator),
+            RunPointsSensor(coordinator),
+            AreaSensor(coordinator),
+        ]
+    )
+
+
+class RoomsSensor(TuyaVacuumEntity, SensorEntity):
+    # The list could be long and changes rarely: keep it out of the recorder.
+    _unrecorded_attributes = frozenset({"rooms"})
+
+    def __init__(self, coordinator: Coordinator) -> None:
+        super().__init__(coordinator, "rooms")
+
+    @property
+    def native_value(self) -> int:
+        return len(self.coordinator.visible_rooms)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        rooms = self.coordinator.visible_rooms
+        return {"rooms": [{"id": i, "name": n} for i, n in rooms.items()]}
+
+
+class RunPointsSensor(TuyaVacuumEntity, SensorEntity):
+    def __init__(self, coordinator: Coordinator) -> None:
+        super().__init__(coordinator, "run_points")
+
+    @property
+    def native_value(self) -> int:
+        return self.coordinator.run_points
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        path_id = self.coordinator.run_path_id
+        if path_id is None:
+            return {}
+        # pathID is the run's start time in Unix seconds (PROTOCOL).
+        return {
+            "path_id": path_id,
+            "started": datetime.fromtimestamp(path_id, UTC).isoformat(),
+        }
+
+
+class AreaSensor(TuyaVacuumEntity, SensorEntity):
+    _attr_device_class = SensorDeviceClass.AREA
+    _attr_native_unit_of_measurement = UnitOfArea.SQUARE_METERS
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    def __init__(self, coordinator: Coordinator) -> None:
+        super().__init__(coordinator, "covered_area")
+
+    @property
+    def native_value(self) -> float:
+        return self.coordinator.covered_area

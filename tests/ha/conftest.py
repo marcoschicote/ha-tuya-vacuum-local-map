@@ -14,3 +14,13 @@ def _fast_connection(monkeypatch):
     monkeypatch.setattr(connection, "HEARTBEAT_SECONDS", 0.05)
     monkeypatch.setattr(connection, "BACKOFF_START", 0.01)
     monkeypatch.setattr(connection, "BACKOFF_MAX", 0.04)
+
+
+@pytest.fixture
+def factory(monkeypatch):
+    """Patch the device factory; tests append the devices they want."""
+    from ..fakes import Factory
+
+    fake = Factory()
+    monkeypatch.setattr(connection, "_tinytuya_device", fake)
+    return fake

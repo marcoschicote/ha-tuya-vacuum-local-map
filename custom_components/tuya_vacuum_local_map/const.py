@@ -17,3 +17,9 @@ DEFAULT_BRUSH = 300
 DEFAULT_UNITS_PER_METRE = 1000
 
 ISSUE_STALLED = "connection_stalled"
+
+STORAGE_VERSION = 1
+
+
+def storage_key(entry_id: str) -> str:
+    return f"{DOMAIN}.{entry_id}"

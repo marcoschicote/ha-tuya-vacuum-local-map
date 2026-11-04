@@ -266,3 +266,16 @@ def test_many_runs_open_at_once_do_not_pile_up():
     assert len(t._runs) <= 3
     t.flush()
     assert sorted(t.finished_ids) == list(range(1, 11))
+
+
+def test_revision_and_point_count_track_new_points_only():
+    t = tracker()
+    assert t.revision == 0 and t.point_count == 0
+    t.add(chunk(100, 0, line(5)), now=0)
+    assert (t.revision, t.point_count) == (1, 5)
+    t.add(chunk(100, 0, line(5)), now=1)  # a re-send
+    assert t.revision == 1
+    t.add(chunk(100, 3, line(5, x0=150)), now=2)
+    assert (t.revision, t.point_count) == (2, 8)
+    t.add(chunk(100, 0, [], total=0), now=3)  # an empty chunk
+    assert t.revision == 2

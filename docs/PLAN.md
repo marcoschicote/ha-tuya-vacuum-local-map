@@ -28,7 +28,8 @@ custom_components/tuya_vacuum_local_map/
   config_flow.py     host, device ID, local key, protocol version; options
   connection.py      worker thread around tinytuya (no HA imports)
   hub.py             owns the connection for an entry, hands data to the event loop
-  coordinator.py     feeds frames into core, owns state and storage
+  coordinator.py     feeds frames into core, owns state and storage (replaces hub.py)
+  entity.py          shared base for the entities
   image.py           the map
   sensor.py          rooms, current run
   binary_sensor.py   connected
@@ -279,9 +280,9 @@ Options flow: hidden rooms, brush width (default 300), units per metre (default 
 
 - Update entities at most once per second.
 - Re-render the image at most every 30 s during a run, and once at the run's end. Render in an executor.
-- Save with `Store.async_delay_save`, 30 s delay, and always on run end and on unload.
+- Save 30 s after a change, and always on run end and on unload. It uses an own 30 s timer, not `Store.async_delay_save`: that calls its data function on the event loop, and compressing a whole-home grid takes about 80 ms here (more on a Pi). The grid is copied on the loop (3 ms) and encoded in the executor.
 
-**Storage** (`homeassistant.helpers.storage.Store`, one per config entry): grid bytes (base64), merged rooms, `mapId`, recent finished run IDs, the last run's segments. Include a version, and handle a missing or corrupt store by starting empty with a warning.
+**Storage** (`homeassistant.helpers.storage.Store`, one per config entry): grid bytes (base64), merged rooms, a **salted hash of `mapId`** (not the `mapId`: PROTOCOL says never store it, and a hash is enough to notice a change, also after a restart), recent finished run IDs, the last run's segments, and the previous grid for one generation. The store is deleted when the entry is removed. Include a version, and handle a missing or corrupt store by starting empty with a warning.
 
 **Entities.** All on one device, with `has_entity_name`.
 
@@ -297,6 +298,17 @@ Options flow: hidden rooms, brush width (default 300), units per metre (default 
 - **Keep frames and paths out of state attributes.** HA's recorder would write them to the database many times a second. Mark anything sizeable in `_unrecorded_attributes`.
 
 **Diagnostics.** Redact key, device ID, host and `mapId`, and leave out room names and coordinates. Include counts per `infoType`, unknown `infoType`s seen, the largest frame size, and reconnect count. This is how support requests for new models will get answered, so also include the field names (without values) of each unknown type.
+
+**What the code settled:**
+
+- The tracker counts a run when it goes quiet for 120 s or a new run starts. Run IDs are kept after a reset, so the app re-sending the run that was just wiped isn't counted again.
+- A new map (a different `mapId` hash) starts an empty grid and forgets the rooms, keeping the old grid for one generation. The first `mapId` ever seen does not reset, so coverage from before the first room list is kept.
+- The room command is held in `run_rooms` until the run ends (phase 5 uses it).
+- Unknown `infoType`s are counted, and their field names (never values) go in diagnostics.
+- Entities update at most once a second, the image is redrawn at most every 30 s (the first change after a quiet spell redraws at once) and when a run ends, and a burst of 200 frames produced fewer than 12 state changes in a test.
+- `async_remove_entry` deletes the stored map: it shows the layout of a home.
+- The live position is still not drawn (phase 5), and `Room` positions are still unknown.
+- **Not done:** the SVG-in-a-picture-card check on a real dashboard, in the browser and in the app. It needs a person. If it fails, switch `render.py` to PNG (Pillow) and update this plan.
 
 **Tests:** frames through to entity state; restart restores the map; `mapId` change resets it; rate limits with a burst of frames; diagnostics contain nothing redacted; a corrupt store starts empty.
 

@@ -35,7 +35,7 @@ from .const import (
     DOMAIN,
     VERSIONS,
 )
-from .hub import TuyaVacuumConfigEntry
+from .coordinator import TuyaVacuumConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
 

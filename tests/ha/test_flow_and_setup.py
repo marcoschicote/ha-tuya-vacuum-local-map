@@ -2,7 +2,6 @@
 
 import base64
 import json
-import pathlib
 
 import pytest
 from homeassistant.config_entries import ConfigEntryState
@@ -23,33 +22,8 @@ from custom_components.tuya_vacuum_local_map.const import (
     ISSUE_STALLED,
 )
 
-from ..fakes import DEVICE_ID, HOST, KEY, Factory, FakeDevice, wait_for
-
-FRAMES = {
-    f["name"]: f
-    for f in json.loads(
-        (pathlib.Path(__file__).parent.parent / "fixtures/frames.json").read_text()
-    )
-}
-USER_INPUT = {
-    CONF_HOST: HOST,
-    CONF_DEVICE_ID: DEVICE_ID,
-    CONF_LOCAL_KEY: KEY,
-    CONF_VERSION: "3.3",
-}
-DATA = dict(USER_INPUT)
-
-
-@pytest.fixture
-def factory(monkeypatch):
-    """Patch the device factory; tests append the devices they want."""
-    fake = Factory()
-    monkeypatch.setattr(connection, "_tinytuya_device", fake)
-    return fake
-
-
-def room_dps():
-    return {FRAMES["room_list"]["dp"]: FRAMES["room_list"]["b64"]}
+from ..fakes import DEVICE_ID, HOST, KEY, FakeDevice, wait_for
+from .common import DATA, FRAMES, USER_INPUT, room_dps, setup_entry
 
 
 async def start_flow(hass, user_input):
@@ -58,16 +32,6 @@ async def start_flow(hass, user_input):
     )
     assert result["type"] is FlowResultType.FORM and result["step_id"] == "user"
     return await hass.config_entries.flow.async_configure(result["flow_id"], user_input)
-
-
-async def setup_entry(hass, options=None):
-    entry = MockConfigEntry(
-        domain=DOMAIN, data=DATA, unique_id=DEVICE_ID, options=options or {}
-    )
-    entry.add_to_hass(hass)
-    assert await hass.config_entries.async_setup(entry.entry_id)
-    await hass.async_block_till_done()
-    return entry
 
 
 # --- config flow --------------------------------------------------------------------

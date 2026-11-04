@@ -188,3 +188,25 @@ def test_stamping_a_3000_point_run_is_fast():
     print(f"3000-point run stamped in {elapsed * 1000:.1f} ms")
     assert elapsed < 1.0  # the budget for a Raspberry Pi class CPU
     assert grid.covered_cells() > 3000
+
+
+def test_copy_is_independent():
+    grid = CoverageGrid(cell=40, brush=200)
+    grid.add_run([[(0, 0), (500, 0)]])
+    clone = grid.copy()
+    assert clone.cells() == grid.cells() and (clone.cell, clone.brush) == (40, 200)
+    grid.add_run([[(0, 900)]])
+    assert clone.covered_cells() < grid.covered_cells()
+
+
+def test_set_brush_changes_new_runs_only():
+    grid = CoverageGrid(cell=50, brush=100)
+    grid.add_run([[(0, 0)]])
+    narrow = grid.covered_cells()
+    grid.set_brush(500)
+    assert grid.brush == 500 and grid.covered_cells() == narrow
+    grid.add_run([[(5000, 5000)]])
+    assert grid.covered_cells() - narrow > narrow * 5
+    assert CoverageGrid.from_bytes(grid.to_bytes()).brush == 500
+    with pytest.raises(ValueError):
+        grid.set_brush(0)

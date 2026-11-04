@@ -30,9 +30,16 @@ class CoverageGrid:
         if cell < 1 or brush < 1:
             raise ValueError("cell and brush must be positive")
         self.cell = cell
-        self.brush = brush
         self._cells: dict[Cell, int] = {}
-        radius = brush / (2 * cell)
+        self.set_brush(brush)
+
+    def set_brush(self, brush: int) -> None:
+        """Change the brush width for runs added from now on. Cells already counted
+        keep what they have: the old paths are gone, so they can't be re-stamped."""
+        if brush < 1:
+            raise ValueError("cell and brush must be positive")
+        self.brush = brush
+        radius = brush / (2 * self.cell)
         reach = math.ceil(radius)
         # The disc's cell offsets, computed once.
         self._disc = tuple(
@@ -41,6 +48,12 @@ class CoverageGrid:
             for dy in range(-reach, reach + 1)
             if dx * dx + dy * dy <= radius * radius
         ) or ((0, 0),)
+
+    def copy(self) -> CoverageGrid:
+        """An independent copy, cheap enough to hand to another thread to draw."""
+        other = CoverageGrid(self.cell, self.brush)
+        other._cells = dict(self._cells)
+        return other
 
     # --- stamping ---------------------------------------------------------------
 

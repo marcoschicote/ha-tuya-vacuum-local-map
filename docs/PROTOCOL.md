@@ -51,7 +51,7 @@ What else is in the envelope varies by type, so treat everything beyond `infoTyp
 | `ts` (Unix seconds, an integer) | Path frames (21011) |
 | `dInfo` (`{"ts": "<13 digits, ms>", "userId": "..."}`) | Room list and command frames on DP 127 |
 
-**Private fields:** `dInfo.userId`, `data.userId`, `data.sn` and `data.mapId` identify the owner, the vacuum or the home. Never log, store, expose or put them in diagnostics. Read only what's needed (`mapId` to detect a new map).
+**Private fields:** `dInfo.userId`, `data.userId`, `data.sn` and `data.mapId` identify the owner, the vacuum or the home. Never log, store, expose or put them in diagnostics. Read only what's needed (`mapId` to detect a new map): to notice a change across restarts, store a salted hash of it, never the value.
 
 Ordinary string DPs will reach this check, so a failed decode is normal: skip it silently, without logging an error.
 

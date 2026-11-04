@@ -52,6 +52,7 @@ class RunTracker:
         self._finished: deque[int] = deque(finished_ids, maxlen=KEEP_FINISHED_IDS)
         self._runs: dict[int, _Run] = {}
         self._latest: int | None = None
+        self.revision = 0  # goes up whenever any run receives a new point
 
     @property
     def finished_ids(self) -> list[int]:
@@ -62,6 +63,12 @@ class RunTracker:
     def path_id(self) -> int | None:
         """The run that last received a new point."""
         return self._latest
+
+    @property
+    def point_count(self) -> int:
+        """Points held for the run that last received a new point."""
+        run = self._runs.get(self._latest) if self._latest is not None else None
+        return len(run.assembler) if run else 0
 
     @property
     def last_run(self) -> list[list[Point]]:
@@ -86,6 +93,7 @@ class RunTracker:
             run.dirty = True
             run.activity = now
             self._latest = chunk.path_id
+            self.revision += 1
         return done
 
     def poll(self, now: float) -> list[int]:
