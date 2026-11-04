@@ -49,15 +49,13 @@ tests/
 
 The raw Rowenta captures weren't kept, so several shapes in PROTOCOL.md are only described. Do this before writing the decoder.
 
-**Ask the owner** to run `tools/capture.py`, since it needs the local key and a vacuum run. It's read-only. Capture:
+**Ask the owner** to run `tools/capture.py 12`, since it needs the local key and the app. It's read-only. Twelve minutes is enough: we only need the shape of each message and a few examples, not a full dataset. The owner does three things in the app:
 
-1. App map screen opened while docked, for the room list.
-2. A short clean of one room, started from the app.
-3. A clean of two rooms, for `segmentId`.
-4. A room renamed in the app using an accented character, for the name encoding.
-5. A complete run through to docking, for run end behaviour.
+1. Open the map screen while the vacuum is docked, for the room list.
+2. Start a clean of one room, let it run for about two minutes, then send it back to the dock. This gives the path chunks and the room command.
+3. Open the map screen again, to see how the last run is re-sent.
 
-**Then:**
+Optional, one minute: rename a room using an accented character such as `ñ`, to check the name encoding. A two-room clean isn't needed: its command has the same shape with more IDs in `segmentId`.
 
 - Answer these and update the labels in PROTOCOL.md:
   - Is `autoAreaValue` under `data`? What shape is `pos`?
