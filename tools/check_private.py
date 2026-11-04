@@ -6,6 +6,7 @@ one term per line, for the owner's own device ID, room names and so on). It can'
 read images.
 """
 
+import os
 import pathlib
 import re
 import subprocess
@@ -53,6 +54,30 @@ def problems_in(label: str, text: str, terms: list[str]) -> list[str]:
     return found
 
 
+def commit_emails() -> set[str]:
+    """Author and committer emails in history.
+
+    On a pull request, CI checks out the merge commit GitHub builds on the fly
+    (GITHUB_REF is refs/pull/N/merge). Its author is the pull request's opener, under
+    whatever commit email their account uses, and it never reaches the branch: it is
+    not one of the commits being reviewed. Only that one commit is skipped. The
+    commits on the branch, and any real merge commit already in history, are still
+    checked, so CI needs the full history (`fetch-depth: 0`).
+    """
+    skip = ""
+    ref = os.environ.get("GITHUB_REF", "")
+    if os.environ.get("GITHUB_EVENT_NAME") == "pull_request" and re.fullmatch(
+        r"refs/pull/\d+/merge", ref
+    ):
+        skip = git("rev-parse", "HEAD").strip()
+    emails = set()
+    for line in git("log", "--format=%H %ae %ce").splitlines():
+        commit, *found = line.split()
+        if commit != skip:
+            emails.update(found)
+    return emails
+
+
 def main() -> int:
     terms = load_terms()
     problems = []
@@ -66,7 +91,7 @@ def main() -> int:
             problems.append(f"{name}: binary file, check it by hand")
     problems += problems_in("commit messages", git("log", "--format=%B"), terms)
     # A machine's default git email can reveal its hostname and network name.
-    emails = set(git("log", "--format=%ae%n%ce").split())
+    emails = commit_emails()
     emails.add(git("config", "user.email").strip())
     problems += [
         f"git email isn't a GitHub noreply address: {email}"
