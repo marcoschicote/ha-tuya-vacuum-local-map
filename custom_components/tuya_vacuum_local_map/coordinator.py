@@ -646,7 +646,15 @@ class Coordinator:
             "reported_area": self.reported_area,
             "calibration": list(self.calibration),
             "covered_cells": self.grid.covered_cells(),
+            # Runs whose IDs are remembered (capped), not every run ever counted.
             "finished_runs": len(self.tracker.finished_ids),
+            "counted_since_start": self.tracker.counted_total,
+            # Start time (Unix seconds, the vacuum's own), points and new cells per
+            # count: no coordinates. A run counted twice shows up twice.
+            "recent_counts": [
+                {"path_id": c.path_id, "points": c.points, "new_cells": c.new_cells}
+                for c in self.tracker.recent_counts
+            ],
             "renders": self.render_count,
             "saves": self.save_count,
         }

@@ -17,6 +17,17 @@ from .protocol import PathChunk
 IDLE_SECONDS = 120.0
 KEEP_FINISHED_IDS = 50  # run IDs remembered, so a re-sent run isn't counted twice
 KEEP_RUNS = 3  # runs whose points are kept in memory, so they can still grow
+KEEP_COUNTS = 20  # counts remembered for diagnostics
+
+
+@dataclass(frozen=True)
+class CountRecord:
+    """One time a run was counted. The path ID is the run's start time in Unix
+    seconds, the same time the vacuum logs, so the two can be matched."""
+
+    path_id: int
+    points: int
+    new_cells: int
 
 
 @dataclass
@@ -57,11 +68,18 @@ class RunTracker:
         self._counted: dict[int, frozenset[Cell]] = {}
         self._latest: int | None = None
         self.revision = 0  # goes up whenever any run receives a new point
+        self.counted_total = 0  # every count since this tracker started
+        self._counts: deque[CountRecord] = deque(maxlen=KEEP_COUNTS)
 
     @property
     def finished_ids(self) -> list[int]:
         """Run IDs counted so far, oldest first. Persist these."""
         return list(self._finished)
+
+    @property
+    def recent_counts(self) -> list[CountRecord]:
+        """The latest counts, oldest first. A run counted twice appears twice."""
+        return list(self._counts)
 
     @property
     def path_id(self) -> int | None:
@@ -140,8 +158,12 @@ class RunTracker:
         segments = run.assembler.segments()
         if not segments:
             return []
+        covered_before = self.grid.covered_cells()
         run.cells = self.grid.add_run(segments, run.cells)
         self._counted[run.path_id] = run.cells
         if run.path_id not in self._finished:
             self._finished.append(run.path_id)
+        self.counted_total += 1
+        new_cells = self.grid.covered_cells() - covered_before
+        self._counts.append(CountRecord(run.path_id, len(run.assembler), new_cells))
         return [run.path_id]
