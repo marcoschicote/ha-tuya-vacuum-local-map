@@ -51,6 +51,10 @@ class RunTracker:
         self.idle_seconds = idle_seconds
         self._finished: deque[int] = deque(finished_ids, maxlen=KEEP_FINISHED_IDS)
         self._runs: dict[int, _Run] = {}
+        # Cells of the runs counted by the current add/poll/flush call, so a run that
+        # is finished and evicted in the same call is still queryable by the caller
+        # right after (it reads run_cells to attribute rooms and calibrate).
+        self._counted: dict[int, frozenset[Cell]] = {}
         self._latest: int | None = None
         self.revision = 0  # goes up whenever any run receives a new point
 
@@ -71,9 +75,12 @@ class RunTracker:
         return len(run.assembler) if run else 0
 
     def run_cells(self, path_id: int) -> frozenset[Cell] | None:
-        """The cells a run covers in the grid, if its points are still in memory."""
+        """The cells a run covers in the grid: for a run still in memory, or one just
+        counted by the most recent call (even if that call also evicted it)."""
         run = self._runs.get(path_id)
-        return run.cells if run else None
+        if run is not None:
+            return run.cells
+        return self._counted.get(path_id)
 
     def live_point(self) -> Point | None:
         """The newest point of a run that hasn't gone quiet yet, else None."""
@@ -89,6 +96,7 @@ class RunTracker:
         return run.assembler.segments() if run else []
 
     def add(self, chunk: PathChunk, now: float) -> list[int]:
+        self._counted = {}
         done: list[int] = []
         run = self._runs.get(chunk.path_id)
         if run is None:
@@ -110,6 +118,7 @@ class RunTracker:
 
     def poll(self, now: float) -> list[int]:
         """Count runs that have gone quiet. Call about once a second."""
+        self._counted = {}
         done: list[int] = []
         for run in self._runs.values():
             if run.dirty and now - run.activity >= self.idle_seconds:
@@ -118,6 +127,7 @@ class RunTracker:
 
     def flush(self) -> list[int]:
         """Count everything pending, such as on unload."""
+        self._counted = {}
         done: list[int] = []
         for run in self._runs.values():
             done += self._finish(run)
@@ -131,6 +141,7 @@ class RunTracker:
         if not segments:
             return []
         run.cells = self.grid.add_run(segments, run.cells)
+        self._counted[run.path_id] = run.cells
         if run.path_id not in self._finished:
             self._finished.append(run.path_id)
         return [run.path_id]
