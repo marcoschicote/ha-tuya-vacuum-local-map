@@ -35,6 +35,12 @@ class CoverageMap(TuyaVacuumEntity, ImageEntity):
 
     async def async_image(self) -> bytes | None:
         if self.coordinator.svg is None:  # nothing drawn yet
-            empty = RenderInput(CoverageGrid(), [], [], frozenset(), None)
+            empty = RenderInput(
+                grid=CoverageGrid(),
+                last_run=[],
+                rooms=[],
+                hidden_rooms=frozenset(),
+                position=None,
+            )
             return render_svg(empty)
         return self.coordinator.svg

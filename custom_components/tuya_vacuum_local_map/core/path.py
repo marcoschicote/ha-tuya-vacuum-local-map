@@ -26,6 +26,7 @@ class RunAssembler:
         self._path_id: int | None = None
         self._points: dict[int, Point] = {}
         self._total = 0
+        self._max_index: int | None = None  # highest stored index, tracked for O(1)
 
     @property
     def path_id(self) -> int | None:
@@ -52,6 +53,7 @@ class RunAssembler:
             self._path_id = chunk.path_id
             self._points = {}
             self._total = 0
+            self._max_index = None
         self._total = max(self._total, chunk.total)
         limit = min(self._total + INDEX_SLACK, MAX_POINTS)
         changed = False
@@ -62,11 +64,17 @@ class RunAssembler:
             if self._points.get(index) != point:
                 self._points[index] = point
                 changed = True
+                if self._max_index is None or index > self._max_index:
+                    self._max_index = index
         return changed
 
     def last_point(self) -> Point | None:
-        """The point with the highest index, which is where the vacuum last was."""
-        return self._points[max(self._points)] if self._points else None
+        """The point with the highest index, which is where the vacuum last was.
+
+        Points are only ever added, so the highest index is tracked as they arrive
+        rather than scanned for: this is read several times per entity update.
+        """
+        return self._points[self._max_index] if self._max_index is not None else None
 
     def segments(self) -> list[list[Point]]:
         """Runs of points in order, split at missing indexes and at jumps."""

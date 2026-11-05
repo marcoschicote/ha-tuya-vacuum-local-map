@@ -308,3 +308,25 @@ def test_the_assembler_knows_its_last_point():
     run.add(chunk(1, 0, line(3), total=10))
     run.add(chunk(1, 7, [(9, 9)], total=10))
     assert run.last_point() == (9, 9)
+    run.add(chunk(1, 1, [(5, 5)], total=10))  # a lower index leaves the last point
+    assert run.last_point() == (9, 9)
+    run.add(chunk(2, 0, line(2, y=500)))  # a new run starts the last point over
+    assert run.last_point() == (50, 500)
+
+
+def test_run_cells_survive_eviction_of_a_just_counted_run():
+    # Three runs can all be dirty at once when late chunks reopen earlier ones. A
+    # fourth run then finishes all three and evicts the one with the oldest activity,
+    # which is among the runs it just counted. Its cells must still be available so
+    # the caller can attribute rooms and calibrate from it.
+    t = tracker()  # KEEP_RUNS is 3
+    t.add(chunk(100, 0, line(3)), now=0)
+    t.add(chunk(200, 0, line(3, y=700)), now=1)  # finishes 100
+    t.add(chunk(300, 0, line(3, y=1400)), now=2)  # finishes 200; 300 stays dirty at t=2
+    t.add(chunk(100, 3, line(3, x0=150)), now=10)  # reopen 100, activity 10
+    t.add(chunk(200, 3, line(3, x0=150, y=700)), now=11)  # reopen 200, activity 11
+    done = t.add(chunk(400, 0, line(3, y=2100)), now=12)
+    assert set(done) == {100, 200, 300}
+    assert 300 not in t._runs  # evicted (oldest activity)
+    assert t.run_cells(300) is not None  # but its cells survived the same call
+    assert t.run_cells(100) is not None and t.run_cells(200) is not None
