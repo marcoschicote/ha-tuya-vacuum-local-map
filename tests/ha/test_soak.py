@@ -67,6 +67,9 @@ def vacuum(socket_enabled, monkeypatch):
         yield fake
 
 
+@pytest.mark.skipif(
+    not os.path.exists("/proc/self/statm"), reason="memory is read from /proc (Linux)"
+)
 async def test_soak(hass, vacuum, monkeypatch, caplog, hass_storage):
     from pytest_homeassistant_custom_component.common import MockConfigEntry
 
