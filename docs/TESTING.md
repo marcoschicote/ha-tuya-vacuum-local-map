@@ -53,6 +53,25 @@ Each step says what good looks like. Write down what you see, even when it's fin
    Good: the covered area is close to what the vacuum reports. If not, the units setting
    is probably wrong (README, "Units are a guess").
 
+## Changes to check on the way
+
+Changes since `0.1.0-alpha.1` that the automated tests cover only with the fake vacuum.
+Each one is a question to answer in the steps above, or in the notes column of the
+results table.
+
+- **Several runs in one session** (step 4, and `core/runs.py`): after a few runs, each
+  run is still counted once, and the last run's trail is still the one just finished.
+- **Position dot** (step 3): it follows the vacuum during a run and stays where the
+  vacuum stopped once it's docked.
+- **Run start time** (sensor "Run points", `started` attribute): a real ISO time, not
+  missing or an error.
+- **Calibration** (diagnostics, "reported area" and "ratio"): the ratio stays filled in
+  after a status frame that has no area, instead of disappearing.
+- **Largest frame** (diagnostics): the size of the decoded message, well under the
+  65536 limit in `connection.py`. Note the number.
+- **Room names with accents or symbols** (sensor "Rooms", `rooms` attribute): shown
+  correctly, not as escape codes or question marks.
+
 ## What to capture
 
 - The **diagnostics download** (Settings, Devices & services, Tuya Vacuum Local Map,
