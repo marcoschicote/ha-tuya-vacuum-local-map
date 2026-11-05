@@ -84,11 +84,16 @@ class RunPointsSensor(TuyaVacuumEntity, SensorEntity):
         path_id = self.coordinator.run_path_id
         if path_id is None:
             return {}
-        # pathID is the run's start time in Unix seconds (PROTOCOL).
-        return {
-            "path_id": path_id,
-            "started": datetime.fromtimestamp(path_id, UTC).isoformat(),
-        }
+        # pathID is the run's start time in Unix seconds (PROTOCOL), but it comes from
+        # the device and is only checked to be an integer: a bogus value can be outside
+        # the range a datetime can hold. Keep the raw id and leave `started` out rather
+        # than raise every time Home Assistant reads the attributes.
+        attrs: dict[str, Any] = {"path_id": path_id}
+        try:
+            attrs["started"] = datetime.fromtimestamp(path_id, UTC).isoformat()
+        except (OverflowError, OSError, ValueError):
+            pass
+        return attrs
 
 
 class AreaSensor(TuyaVacuumEntity, SensorEntity):

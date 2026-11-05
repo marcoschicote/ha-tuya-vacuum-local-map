@@ -571,3 +571,17 @@ async def test_run_points_is_exact_when_a_new_run_starts(hass, clock):
     assert state(hass, "sensor", "run_points").state == "3"  # at once, not in 10 s
     assert state(hass, "sensor", "run_points").attributes["path_id"] == RUN + 1000
     await hass.config_entries.async_unload(entry.entry_id)
+
+
+async def test_an_out_of_range_path_id_does_not_crash_run_points(hass, clock):
+    # pathID comes from the device and is only checked to be an integer. A value too
+    # large for a datetime must not make the sensor raise every time it is read.
+    entry = await setup_entry(hass)
+    points = serpentine()
+    bad = 99_999_999_999_999  # would be the year 3170843
+    await feed(hass, entry, chunk_dps(bad, 0, points, total=len(points)))
+    sensor = state(hass, "sensor", "run_points")
+    assert sensor.state == str(len(points))  # the state was written, not an error
+    assert sensor.attributes["path_id"] == bad  # the raw id is still there
+    assert "started" not in sensor.attributes  # left out, since it can't be a datetime
+    await hass.config_entries.async_unload(entry.entry_id)

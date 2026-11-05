@@ -428,7 +428,12 @@ class Coordinator:
             if frame is None:
                 continue
             self.frame_counts[frame.info_type] += 1
-            self.largest_frame = max(self.largest_frame, len(value))
+            # `value` is the base64 text; the decoded payload is what tinytuya's limit
+            # is about and what the diagnostic should report. A decoded frame is valid
+            # base64, so its length is a multiple of four with 0 to 2 pad characters.
+            self.largest_frame = max(
+                self.largest_frame, len(value) // 4 * 3 - value.count("=")
+            )
             if frame.info_type not in KNOWN_TYPES:
                 self._note_unknown(frame.info_type, list(frame.data))
                 continue
@@ -443,7 +448,10 @@ class Coordinator:
                 continue
             status = parse_status(frame)
             if status is not None:
-                self.reported_area = status.clean_area
+                # Keep the last usable area: a status frame without one (missing or
+                # malformed cleanArea) says nothing, and shouldn't wipe calibration.
+                if status.clean_area is not None:
+                    self.reported_area = status.clean_area
                 continue
             parsed = parse_rooms(frame)
             if parsed is not None:
@@ -482,6 +490,8 @@ class Coordinator:
 
     @callback
     def _tick(self, _now: datetime) -> None:
+        if self._stopped:
+            return
         finished = self.tracker.poll(_monotonic())
         if finished:
             self._finished(finished)
