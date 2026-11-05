@@ -89,7 +89,8 @@ from the new-model template. Keep it to what happened, with no private values.
 
 | Model | Version | Protocol | Date | Result | Notes |
 | --- | --- | --- | --- | --- | --- |
-| | | | | | |
+| Rowenta X-plorer (Aspi) | 0.1.0-alpha.2 | 3.3 | 2026-11-05 | Steps 1–5 pass; 6 and 7 not run yet | One room, run counted once: covered area 8.88 m² against 8.0 m² from the vacuum's own log. One room outline learned. No reported area on this model, so no calibration ratio. Connected, no reconnects, no errors. Map checked in light and dark themes. |
+| Rowenta X-plorer (Aspi) | 0.1.0-alpha.2 | 3.3 | 2026-11-05 | Steps 3 and 4 pass; 5 partly (light and dark themes); 6 and 7 not run yet | Full house, second run, counted once: covered area 62.83 m² against 64.0 m² from the vacuum's own log (about 2% low). Outline count unchanged at 1. Connected, no reconnects, no errors. |
 
 ## Releasing
 
