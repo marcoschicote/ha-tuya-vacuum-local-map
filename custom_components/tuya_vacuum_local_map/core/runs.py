@@ -6,6 +6,7 @@ holds no clock: callers pass `now` in seconds from any steady clock.
 
 from __future__ import annotations
 
+import logging
 from collections import deque
 from collections.abc import Iterable
 from dataclasses import dataclass, field
@@ -14,9 +15,22 @@ from .grid import Cell, CoverageGrid
 from .path import Point, RunAssembler
 from .protocol import PathChunk
 
+_LOGGER = logging.getLogger(__name__)
+
 IDLE_SECONDS = 120.0
 KEEP_FINISHED_IDS = 50  # run IDs remembered, so a re-sent run isn't counted twice
 KEEP_RUNS = 3  # runs whose points are kept in memory, so they can still grow
+KEEP_COUNTS = 20  # counts remembered for diagnostics
+
+
+@dataclass(frozen=True)
+class CountRecord:
+    """One time a run was counted. The path ID is the run's start time in Unix
+    seconds, the same time the vacuum logs, so the two can be matched."""
+
+    path_id: int
+    points: int
+    new_cells: int
 
 
 @dataclass
@@ -57,11 +71,18 @@ class RunTracker:
         self._counted: dict[int, frozenset[Cell]] = {}
         self._latest: int | None = None
         self.revision = 0  # goes up whenever any run receives a new point
+        self.counted_total = 0  # every count since this tracker started
+        self._counts: deque[CountRecord] = deque(maxlen=KEEP_COUNTS)
 
     @property
     def finished_ids(self) -> list[int]:
         """Run IDs counted so far, oldest first. Persist these."""
         return list(self._finished)
+
+    @property
+    def recent_counts(self) -> list[CountRecord]:
+        """The latest counts, oldest first. A run counted twice appears twice."""
+        return list(self._counts)
 
     @property
     def path_id(self) -> int | None:
@@ -102,6 +123,14 @@ class RunTracker:
         if run is None:
             if chunk.path_id in self._finished:
                 return done  # a re-send of a run whose points we no longer hold
+            if self._runs:
+                # The vacuum began a new path while another was open: the open run is
+                # finished here, so a split clean shows up as two counts.
+                _LOGGER.debug(
+                    "Path %s starts while %s is open",
+                    chunk.path_id,
+                    sorted(self._runs),
+                )
             for other in list(self._runs.values()):
                 done += self._finish(other)
             while len(self._runs) >= KEEP_RUNS:
@@ -140,8 +169,18 @@ class RunTracker:
         segments = run.assembler.segments()
         if not segments:
             return []
+        covered_before = self.grid.covered_cells()
         run.cells = self.grid.add_run(segments, run.cells)
         self._counted[run.path_id] = run.cells
         if run.path_id not in self._finished:
             self._finished.append(run.path_id)
+        self.counted_total += 1
+        new_cells = self.grid.covered_cells() - covered_before
+        self._counts.append(CountRecord(run.path_id, len(run.assembler), new_cells))
+        _LOGGER.debug(
+            "Counted path %s: %d points, %d new cells",
+            run.path_id,
+            len(run.assembler),
+            new_cells,
+        )
         return [run.path_id]

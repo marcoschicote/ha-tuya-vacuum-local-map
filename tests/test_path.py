@@ -330,3 +330,34 @@ def test_run_cells_survive_eviction_of_a_just_counted_run():
     assert 300 not in t._runs  # evicted (oldest activity)
     assert t.run_cells(300) is not None  # but its cells survived the same call
     assert t.run_cells(100) is not None and t.run_cells(200) is not None
+
+
+def test_each_count_is_recorded_so_a_run_counted_twice_shows_twice():
+    t = tracker()
+    t.add(chunk(100, 0, line(20)), now=0)
+    t.flush()
+    t.add(chunk(200, 0, line(20)), now=5)
+    t.flush()
+    assert t.counted_total == 2
+    assert [c.path_id for c in t.recent_counts] == [100, 200]
+    assert [c.new_cells for c in t.recent_counts] == [t.recent_counts[0].new_cells, 0]
+    assert t.recent_counts[0].points == 20
+
+
+def test_a_resent_run_is_not_recorded_as_a_count():
+    t = tracker()
+    t.add(chunk(100, 0, line(20)), now=0)
+    t.flush()
+    t.add(chunk(100, 0, line(20)), now=5000)
+    t.flush()
+    assert t.counted_total == 1
+    assert len(t.recent_counts) == 1
+
+
+def test_a_new_path_while_one_is_open_is_logged_at_debug(caplog):
+    t = tracker()
+    t.add(chunk(100, 0, line(20)), now=0)
+    with caplog.at_level("DEBUG"):
+        t.add(chunk(200, 0, line(5, y=900)), now=1)
+    assert "Path 200 starts while [100] is open" in caplog.text
+    assert "Counted path 100: 20 points" in caplog.text
