@@ -16,6 +16,7 @@ from custom_components.tuya_vacuum_local_map.const import (
     CONF_HIDDEN_ROOMS,
     CONF_HOST,
     CONF_LOCAL_KEY,
+    CONF_ROOM_NAMES,
     CONF_UNITS_PER_METRE,
     CONF_VERSION,
     DOMAIN,
@@ -304,6 +305,7 @@ async def test_options_flow_offers_the_known_rooms_and_saves_numbers(hass, facto
     )
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert entry.options == {
+        CONF_ROOM_NAMES: {},
         CONF_HIDDEN_ROOMS: [2, 5],
         CONF_BRUSH: 250,
         CONF_UNITS_PER_METRE: 100,
@@ -323,4 +325,36 @@ async def test_options_flow_works_before_any_room_is_known(hass, factory):
     options = result["data_schema"].schema[hidden].config["options"]
     assert [o["value"] for o in options] == ["7"]  # a hidden room stays selectable
     hass.config_entries.options.async_abort(result["flow_id"])
+    await hass.config_entries.async_unload(entry.entry_id)
+
+
+async def test_options_flow_names_a_learned_room(hass, factory):
+    entry = await setup_entry(hass)
+    entry.runtime_data.layer.add_run([4], {(x, 0) for x in range(30)})
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    schema = result["data_schema"].schema
+    key = next(k for k in schema if k == CONF_ROOM_NAMES)
+    assert key.default() == "4:"  # offered, still without a name
+    values = {o["value"] for o in schema[CONF_HIDDEN_ROOMS].config["options"]}
+    assert values == {"4"}
+
+    bad = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {CONF_ROOM_NAMES: "kitchen", CONF_BRUSH: 300.0, CONF_UNITS_PER_METRE: 1000.0},
+    )
+    assert bad["type"] is FlowResultType.FORM
+    assert bad["errors"] == {CONF_ROOM_NAMES: "invalid_room_names"}
+
+    factory.devices.append(FakeDevice())
+    done = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {
+            CONF_ROOM_NAMES: "4: Kitchen\n\n 7 : Hall ",
+            CONF_BRUSH: 300.0,
+            CONF_UNITS_PER_METRE: 1000.0,
+        },
+    )
+    assert done["type"] is FlowResultType.CREATE_ENTRY
+    assert entry.options[CONF_ROOM_NAMES] == {"4": "Kitchen", "7": "Hall"}
+    await hass.async_block_till_done()
     await hass.config_entries.async_unload(entry.entry_id)

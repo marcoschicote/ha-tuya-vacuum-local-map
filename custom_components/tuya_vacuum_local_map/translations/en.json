@@ -25,15 +25,20 @@
     }
   },
   "options": {
+    "error": {
+      "invalid_room_names": "Write one room per line as the room number, a colon and a name, for example `3: Kitchen`."
+    },
     "step": {
       "init": {
         "title": "Map options",
         "data": {
+          "room_names": "Room names",
           "hidden_rooms": "Hidden rooms",
           "brush": "Brush width",
           "units_per_metre": "Units per metre"
         },
         "data_description": {
+          "room_names": "One room per line as `id: name`. Use it for rooms the vacuum never named, such as one learned from a clean command when the app's map screen was never opened. A name here replaces the vacuum's own.",
           "hidden_rooms": "Rooms the vacuum detected but never goes to, such as a balcony. They are left out of the map.",
           "brush": "Width of the cleaned strip in the vacuum's own units. 300 is 30 cm if the units are millimetres.",
           "units_per_metre": "How many of the vacuum's units make one metre. 1000 if they are millimetres."

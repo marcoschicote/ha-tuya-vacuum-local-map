@@ -61,7 +61,7 @@ Ordinary string DPs will reach this check, so a failed decode is normal: skip it
 |---|---|---|---|
 | 20001 | Status: runtime, area, battery | Vacuum → | **[Reported]** Nova |
 | 21003 | Zone list with virtual walls | App → vacuum, echoed back | **[Reported]** Kabum |
-| 21004 | Room list | Vacuum → | **[Seen]** Rowenta |
+| 21004 | Room list | Vacuum → | **[Seen]** Rowenta. On the Kabum Smart 900 it reaches the LAN only when the app opens its map screen |
 | 21005 | Start a clean, nested inside 30000 | App → vacuum | **[Seen]** Rowenta |
 | 21011 | Cleaning path chunk | Vacuum → | **[Seen]** Rowenta and Nova, **[Reported]** Kabum |
 | 21023 | Rooms to clean, nested inside 30000 | App → vacuum | **[Seen]** Rowenta |
@@ -217,7 +217,7 @@ These are normal, unencoded DPs, specific to that model. Useful for checking the
 | 105 | `robot_state` | `fullcharge` → `selectroom` (run starts) → `tocharge` (returning) → `chargring` (docked, charging) |
 | 106 | `battery` | Percent |
 | 107 | `cur_clean_time` | Updated about once a minute during a run |
-| 108 | `cur_clean_area` | Current run, presumably m². Updated a few times per run. Useful for calibrating |
+| 108 | `cur_clean_area` | Current run, in m² **[Seen]** on the Kabum Smart 900 (22 m² reported against 21.59 m² mapped, so the units are mm there); presumably the same on the Rowenta. Updated a few times per run. The integration reads it for the calibration when a model sends no 20001 |
 | 116–121 | Lifetime counters and brush timers | All updated together right after docking |
 | 125 | `request_data` | `map`, `path` or `both`. Sending `map` while docked produced nothing large **[Described]** |
 | 128 | `message_report` | `6` = clean finished **[Described]**; it was `6` in the first status of the capture |

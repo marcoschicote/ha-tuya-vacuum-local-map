@@ -35,6 +35,7 @@ from .const import (
     CONF_HIDDEN_ROOMS,
     CONF_HOST,
     CONF_LOCAL_KEY,
+    CONF_ROOM_NAMES,
     CONF_UNITS_PER_METRE,
     CONF_VERSION,
     DEFAULT_BRUSH,
@@ -68,6 +69,7 @@ TICK = timedelta(seconds=1)
 
 # Types we route or know about. Others are counted, and their field names kept (never
 # their values) so diagnostics can describe a new model's messages.
+AREA_DP = "108"  # `cur_clean_area`, a plain DP: see _note_dp_area
 KNOWN_TYPES = frozenset({20001, 21003, 21004, 21005, 21011, 21023, 30000})
 _MAX_UNKNOWN_TYPES = 20
 _MAX_FIELD_NAMES = 30
@@ -103,6 +105,13 @@ class Coordinator:
             int(room) for room in options.get(CONF_HIDDEN_ROOMS, [])
         )
 
+        # Names the user gave to rooms, for models whose room list never arrives
+        # (it came only when the app opened its map screen, on the Kabum Smart 900).
+        self.room_names = {
+            int(room): str(name)
+            for room, name in options.get(CONF_ROOM_NAMES, {}).items()
+        }
+
         self.connected = False
         self.rooms: dict[int, str] = {}  # merged per room ID, never replaced
         self._pending: tuple[list[int], float] | None = None  # a command, not yet a run
@@ -110,8 +119,9 @@ class Coordinator:
         self._attributed: dict[int, frozenset[Any]] = {}
         self.layer = RoomLayer()  # which cells belong to which room
         self.reported_area: float | None = (
-            None  # from a 20001 status, if the model has one
+            None  # from a 20001 status, or DP 108 where there is none
         )
+        self._status_seen = False  # a 20001 with an area outranks DP 108
         self.calibration: list[dict[str, Any]] = []
         self.frame_counts: Counter[int] = Counter()
         self.unknown_types: dict[int, list[str]] = {}
@@ -153,9 +163,21 @@ class Coordinator:
     # --- what the entities show ---
 
     @property
+    def named_rooms(self) -> dict[int, str]:
+        """The vacuum's room list, with the user's own names over it."""
+        return {**self.rooms, **self.room_names}
+
+    @property
+    def known_room_ids(self) -> set[int]:
+        """Every room we have heard of: listed, named by the user, or learned."""
+        return set(self.named_rooms) | self.layer.known_rooms()
+
+    @property
     def visible_rooms(self) -> dict[int, str]:
         return {
-            i: n for i, n in sorted(self.rooms.items()) if i not in self.hidden_rooms
+            i: n
+            for i, n in sorted(self.named_rooms.items())
+            if i not in self.hidden_rooms
         }
 
     @property
@@ -424,6 +446,9 @@ class Coordinator:
         now = _monotonic()
         changed = False
         for dp, value in dps.items():
+            if dp == AREA_DP:
+                self._note_dp_area(value)
+                continue
             frame = decode_dp(dp, value)
             if frame is None:
                 continue
@@ -452,6 +477,7 @@ class Coordinator:
                 # malformed cleanArea) says nothing, and shouldn't wipe calibration.
                 if status.clean_area is not None:
                     self.reported_area = status.clean_area
+                    self._status_seen = True
                 continue
             parsed = parse_rooms(frame)
             if parsed is not None:
@@ -466,6 +492,17 @@ class Coordinator:
             changed = True
         if changed:
             self._notify()
+
+    def _note_dp_area(self, value: Any) -> None:
+        """The run's area in m² on a plain DP (`cur_clean_area`), for models with no
+        20001 status. DP 108 is where the Rowenta and the Kabum Smart 900 put it (both
+        **[Seen]**); another model may use that DP for something else, so a value that
+        isn't a positive number is ignored. It drops back to 0 when a run starts, which
+        must not wipe the last run's area before that run is counted."""
+        if self._status_seen or isinstance(value, bool):
+            return
+        if isinstance(value, int | float) and value > 0:
+            self.reported_area = value
 
     def _note_unknown(self, info_type: int, fields: list[str]) -> None:
         if info_type not in self.unknown_types:
@@ -611,7 +648,7 @@ class Coordinator:
         data = RenderInput(
             grid=self.grid.copy(),
             last_run=[list(segment) for segment in self.last_run],
-            rooms=[Room(i, n) for i, n in sorted(self.rooms.items())],
+            rooms=[Room(i, n) for i, n in sorted(self.named_rooms.items())],
             hidden_rooms=self.hidden_rooms,
             position=self.position,
             room_layer=self.layer.copy(),

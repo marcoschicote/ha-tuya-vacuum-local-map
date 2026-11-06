@@ -8,6 +8,7 @@ CONF_LOCAL_KEY = "local_key"
 CONF_VERSION = "version"
 
 CONF_HIDDEN_ROOMS = "hidden_rooms"
+CONF_ROOM_NAMES = "room_names"
 CONF_BRUSH = "brush"
 CONF_UNITS_PER_METRE = "units_per_metre"
 
