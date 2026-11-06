@@ -352,9 +352,8 @@ Options flow: hidden rooms, brush width (default 300), units per metre (default 
 
 **Still open:**
 
-- **Outward steps, only after testing and only with the owner's OK:** ask whether a Kabum Smart 900 owner (MaikeMota, on [#900](https://github.com/xZetsubou/hass-localtuya/issues/900)) would test it, reply on [tuya-local #288](https://github.com/make-all/tuya-local/issues/288) that it exists, and submit to the HACS default list. The text gets shown to the owner before anything is posted (AGENTS.md rule 7). The tuya-local comment is already posted.
-- **Known issues:** the run counter may count one clean twice (#12), and the room labels depend on single-room cleans.
-- **Outward steps, only after testing and only with the owner's OK:** ask whether a Kabum Smart 900 owner (MaikeMota, on [#900](https://github.com/xZetsubou/hass-localtuya/issues/900)) would test it, reply on [tuya-local #288](https://github.com/make-all/tuya-local/issues/288) that it exists, and submit to the HACS default list. The text gets shown to the owner before anything is posted (AGENTS.md rule 7).
+- **Announcements:** posted on the Home Assistant Community forum and on r/homeassistant (2026-11-06), drafted for the owner's review first (AGENTS.md rule 7). The tuya-local comment on [#288](https://github.com/make-all/tuya-local/issues/288) is also posted. The owner decided not to ask the Kabum owner first, since everything used is public.
+- **HACS default list:** not submitted. It needs the owner's OK.
 
 ## Later, not planned yet
 
