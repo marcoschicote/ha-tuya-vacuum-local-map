@@ -6,6 +6,7 @@ holds no clock: callers pass `now` in seconds from any steady clock.
 
 from __future__ import annotations
 
+import logging
 from collections import deque
 from collections.abc import Iterable
 from dataclasses import dataclass, field
@@ -13,6 +14,8 @@ from dataclasses import dataclass, field
 from .grid import Cell, CoverageGrid
 from .path import Point, RunAssembler
 from .protocol import PathChunk
+
+_LOGGER = logging.getLogger(__name__)
 
 IDLE_SECONDS = 120.0
 KEEP_FINISHED_IDS = 50  # run IDs remembered, so a re-sent run isn't counted twice
@@ -120,6 +123,14 @@ class RunTracker:
         if run is None:
             if chunk.path_id in self._finished:
                 return done  # a re-send of a run whose points we no longer hold
+            if self._runs:
+                # The vacuum began a new path while another was open: the open run is
+                # finished here, so a split clean shows up as two counts.
+                _LOGGER.debug(
+                    "Path %s starts while %s is open",
+                    chunk.path_id,
+                    sorted(self._runs),
+                )
             for other in list(self._runs.values()):
                 done += self._finish(other)
             while len(self._runs) >= KEEP_RUNS:
@@ -166,4 +177,10 @@ class RunTracker:
         self.counted_total += 1
         new_cells = self.grid.covered_cells() - covered_before
         self._counts.append(CountRecord(run.path_id, len(run.assembler), new_cells))
+        _LOGGER.debug(
+            "Counted path %s: %d points, %d new cells",
+            run.path_id,
+            len(run.assembler),
+            new_cells,
+        )
         return [run.path_id]

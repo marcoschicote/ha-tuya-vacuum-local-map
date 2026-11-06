@@ -352,3 +352,12 @@ def test_a_resent_run_is_not_recorded_as_a_count():
     t.flush()
     assert t.counted_total == 1
     assert len(t.recent_counts) == 1
+
+
+def test_a_new_path_while_one_is_open_is_logged_at_debug(caplog):
+    t = tracker()
+    t.add(chunk(100, 0, line(20)), now=0)
+    with caplog.at_level("DEBUG"):
+        t.add(chunk(200, 0, line(5, y=900)), now=1)
+    assert "Path 200 starts while [100] is open" in caplog.text
+    assert "Counted path 100: 20 points" in caplog.text
