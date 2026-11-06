@@ -15,10 +15,11 @@ room names or real coordinates, and no screenshot of a real map (AGENTS.md, rule
 
 - Home Assistant 2026.2 or newer, and the vacuum's local key, device ID, IP address and
   protocol version (README, "Set up").
-- Install the integration (README, "Install"). Releases so far are pre-releases (for
-  example `0.1.0-alpha.1`), which HACS lists only if "Show beta versions" is on for this
-  repository. Without it, copy `custom_components/tuya_vacuum_local_map` from the tag you
-  are testing into Home Assistant's `custom_components` folder instead. Restart afterwards.
+- Install the integration (README, "Install"). `0.1.0` is the first full release and HACS
+  lists it. Earlier alphas (for example `0.1.0-alpha.2`) were pre-releases, which HACS lists
+  only if "Show beta versions" is on for this repository. To test a tag that HACS doesn't
+  list, copy `custom_components/tuya_vacuum_local_map` from that tag into Home Assistant's
+  `custom_components` folder instead. Restart afterwards.
 - Note the version you are testing (Settings, Devices & services, the integration's
   page, or `manifest.json`), for the results table.
 - If LocalTuya or Tuya Local already holds the vacuum's connection, some models accept

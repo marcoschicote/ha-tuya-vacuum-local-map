@@ -338,17 +338,22 @@ Options flow: hidden rooms, brush width (default 300), units per metre (default 
 **Done in this repo:**
 
 - `brand/icon.png` (256 px) and `icon@2x.png` (512 px), drawn by `tools/make_icon.py` from made-up shapes.
-- The [HACS action](https://www.hacs.xyz/docs/publish/action/) in CI (`hacs` job), next to hassfest. The action refuses private repositories (it said so on the first run), so the job is skipped while the repo is private (`if: ${{ !github.event.repository.private }}`) and starts running once it is public. **A skipped job shows as passing, but HACS validation has not happened until it runs.** It also needs a repository description and topics, which are repository settings and not files. Expect to adjust it on its first real run.
+- The [HACS action](https://www.hacs.xyz/docs/publish/action/) in CI (`hacs` job), next to hassfest. The action refuses private repositories, so the job was skipped while the repo was private (`if: ${{ !github.event.repository.private }}`). Since the repo went public it runs and passes on every change. The description and topics it needs are set in the repository settings.
 - `hacs.json` names the Home Assistant version it was tested on (2026.2.0) as the minimum. That is the tested version, not a measured lower bound.
 - README: what it does and doesn't, install, where to get the local key, options, the map card, limits, which vacuums, how to report a model with the diagnostics file, privacy, developer commands. It carries the simulated sample and says so.
 - Issue templates: a new-model report that asks for the diagnostics file and warns off keys and captures, and a bug report.
 - Tests that the icons are PNGs of the right size, `strings.json` equals `translations/en.json`, every entity key has a translation, and the README's relative links resolve.
 - `tools/check_private.py` no longer reads image names like `icon@2x.png` as an email address.
 
-**Not done, waiting on a tested integration (the owner decides when):**
+**Done since, with the owner's decisions:**
 
-- **A full release.** `0.1.0-alpha.1` is tagged as a pre-release so the real-vacuum test (docs/TESTING.md) runs on a known version. Tag a full release only after the 24-hour hold and a real run, with `version` in the manifest set to match the tag.
-- **Repository settings** HACS needs: description and topics (such as `home-assistant`, `hacs`, `tuya`, `vacuum`). Public or private is the owner's call (AGENTS.md).
+- **A full release.** `0.1.0` was released on 2026-11-06 after the real-vacuum runs in docs/TESTING.md. The owner decided to release before the 24-hour memory check was conclusive, and to ship the open run-counter issue (#12) as a known issue. The earlier alphas were pre-releases so the real-vacuum test ran on known versions.
+- **Repository settings** HACS needs (description and topics) are set. The repo is public, which the owner decided (AGENTS.md).
+
+**Still open:**
+
+- **Outward steps, only after testing and only with the owner's OK:** ask whether a Kabum Smart 900 owner (MaikeMota, on [#900](https://github.com/xZetsubou/hass-localtuya/issues/900)) would test it, reply on [tuya-local #288](https://github.com/make-all/tuya-local/issues/288) that it exists, and submit to the HACS default list. The text gets shown to the owner before anything is posted (AGENTS.md rule 7). The tuya-local comment is already posted.
+- **Known issues:** the run counter may count one clean twice (#12), and the room labels depend on single-room cleans.
 - **Outward steps, only after testing and only with the owner's OK:** ask whether a Kabum Smart 900 owner (MaikeMota, on [#900](https://github.com/xZetsubou/hass-localtuya/issues/900)) would test it, reply on [tuya-local #288](https://github.com/make-all/tuya-local/issues/288) that it exists, and submit to the HACS default list. The text gets shown to the owner before anything is posted (AGENTS.md rule 7).
 
 ## Later, not planned yet
