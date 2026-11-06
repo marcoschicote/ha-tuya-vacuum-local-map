@@ -6,7 +6,7 @@ A Home Assistant integration that draws where a Tuya robot vacuum has cleaned, u
 
 *A simulated map, not a real home.*
 
-> **Status: pre-release.** It is built and tested against fakes and one captured run of one vacuum, and has not yet been run for long on a real vacuum inside Home Assistant. Expect rough edges, and see [Limits](#limits). Nothing is released or tagged yet.
+> **Status: first release, 0.1.0.** It has run on one vacuum (a Rowenta X-plorer) inside Home Assistant for a day, with its map and room labels checked. Known issues are listed in the [repository's issues](https://github.com/marcoschicote/ha-tuya-vacuum-local-map/issues). Expect rough edges, and see [Limits](#limits).
 
 ## What it does
 
