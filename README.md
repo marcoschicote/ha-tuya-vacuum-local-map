@@ -98,19 +98,7 @@ Everything stays on your network. The integration makes no cloud calls. The map 
 
 ## For developers
 
-```sh
-uv venv && uv pip install -e ".[test]"
-.venv/bin/ruff check . && .venv/bin/ruff format --check . && .venv/bin/pytest
-.venv/bin/python tools/check_private.py
-```
-
-- [docs/PLAN.md](docs/PLAN.md): what was built, in order, and what is still unchecked
-- [docs/PROTOCOL.md](docs/PROTOCOL.md): the message formats, and how sure we are of each
-- [docs/TESTING.md](docs/TESTING.md): how to test on a real vacuum, and a table of results
-- [docs/IDEAS.md](docs/IDEAS.md): things that came up and are not planned
-- [AGENTS.md](AGENTS.md): rules for working in this repo
-- `custom_components/tuya_vacuum_local_map/core/` has no Home Assistant imports and is tested without it.
-- `tools/make_sample_map.py` and `tools/make_icon.py` regenerate the sample image and the icon from made-up data.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how to set up, run the checks and find your way around the docs.
 
 ## License
 
