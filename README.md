@@ -6,7 +6,7 @@ A Home Assistant integration that draws where a Tuya robot vacuum has cleaned, u
 
 *A simulated map, not a real home.*
 
-> **Status: first release, 0.1.0.** It has run on one vacuum (a Rowenta X-plorer) inside Home Assistant for a day, with its map and room labels checked. Known issues are listed in the [repository's issues](https://github.com/marcoschicote/ha-tuya-vacuum-local-map/issues). Expect rough edges, and see [Limits](#limits).
+> **Status: early release, 0.1.1.** It has run on one vacuum (a Rowenta X-plorer) inside Home Assistant for a day, with its map and room labels checked. Known issues are listed in the [repository's issues](https://github.com/marcoschicote/ha-tuya-vacuum-local-map/issues). Expect rough edges, and see [Limits](#limits).
 
 ## What it does
 
@@ -49,7 +49,7 @@ The form also asks for the **protocol version**. 3.3 is right for most vacuums. 
 
 The key is stored in Home Assistant like any integration's credentials. It is never logged, and diagnostics leave it out.
 
-**Options** (the integration's *Configure* button): hide rooms the vacuum detected but never goes to, such as a balcony; set the brush width (default 300) and how many of the vacuum's units make a metre (default 1000, so millimetres). Changing them reloads the integration.
+**Options** (the integration's *Configure* button): name rooms the vacuum never named, one `id: name` per line (see [Limits](#limits)); hide rooms the vacuum detected but never goes to, such as a balcony; set the brush width (default 300) and how many of the vacuum's units make a metre (default 1000, so millimetres). Changing them reloads the integration.
 
 ## Show the map
 
@@ -69,8 +69,8 @@ The entity ID depends on what you named the device. **Check that the SVG shows i
 - **It's coverage, not a floor plan.** Many Tuya vacuums only upload their floor plan to the cloud. This shows where the vacuum went, not where the walls are: under furniture and behind a closed door look the same. For the cloud floor plan, see [Tuya Vacuum Maps](https://github.com/jaidenlabelle/tuya-vacuum-maps).
 - **Some vacuums accept only one local connection.** If another app or integration holds it, this one can't connect. After about ten minutes without a connection Home Assistant shows a repair saying so. The Rowenta X-plorer accepts a second connection alongside LocalTuya.
 - **The map starts empty.** It builds up from the runs it sees. When you open the app's map screen the vacuum re-sends its last run: that's recognised and not counted twice, but if the integration was off for a run, that run is only recorded if the vacuum re-sends it.
-- **Room labels need single-room runs.** The vacuum doesn't send room shapes, so outlines are learned from where it cleaned when you started a run for one room in the app. Each room gets its outline and label from one such run, so do one clean per room, and a full-house run adds none. A room that's never cleaned alone has no outline and no label, and a room too small to hold enough of the grid gets none either. Checked on a real vacuum for one room so far.
-- **Units are a guess.** The map assumes the vacuum's units are millimetres. Compare the covered area with what the vacuum reports; the integration records that comparison in its diagnostics. If yours differ, change *units per metre*.
+- **Room labels need single-room runs.** The vacuum doesn't send room shapes, so outlines are learned from where it cleaned when you started a run for one room in the app. Each room gets its outline and label from one such run, so do one clean per room, and a full-house run adds none. A room that's never cleaned alone has no outline and no label, and a room too small to hold enough of the grid gets none either. Some models (a KaBuM! Smart 900) send the room list only when the app's map screen is open. If yours never does, rooms have outlines but no names: add the names in the options. Checked on a real vacuum for one room so far.
+- **Units are a guess.** The map assumes the vacuum's units are millimetres. Compare the covered area with what the vacuum reports (from its status message, or from the `cur_clean_area` data point on models that have no status message); the integration records that comparison in its diagnostics. If yours differ, change *units per metre*.
 - **A new map starts a new coverage map.** If the vacuum makes a new map, the old coverage is kept in storage for one generation and the visible one starts empty.
 - **Only the JSON message family.** Vacuums using Tuya's binary protocol (`path_data` on DP 14, `command_trans` on DP 15) aren't covered.
 

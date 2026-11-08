@@ -13,7 +13,8 @@ Start with [docs/PLAN.md](docs/PLAN.md), then [docs/PROTOCOL.md](docs/PROTOCOL.m
 5. **Don't tie anything to one vacuum.** DP numbers differ by maker, so recognise frames by content (PROTOCOL, "Recognising a frame"). If a behaviour was only seen on one model, say so in a comment.
 6. **Mark what you verify.** When a capture confirms or disproves something in `docs/PROTOCOL.md`, update its confidence label in the same change.
 7. **Ask before posting elsewhere.** Show the owner the text before posting to another project's issues or PRs.
-8. **Run the privacy check before every commit** (below), and look at any image yourself before adding it, since the check can't read images. Screenshots and sample maps must use made-up data: a real map shows the layout of someone's home.
+8. **Check the README before a release.** It must match what the release does (status line, options, limits). The checklist is in docs/TESTING.md, "Releasing".
+9. **Run the privacy check before every commit** (below), and look at any image yourself before adding it, since the check can't read images. Screenshots and sample maps must use made-up data: a real map shows the layout of someone's home.
 
 ## Checks
 
