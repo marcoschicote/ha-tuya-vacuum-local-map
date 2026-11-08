@@ -526,6 +526,7 @@ async def test_a_change_is_saved_by_the_30_second_timer(hass, clock, hass_storag
     await feed(hass, entry, rooms_dps())
     assert coordinator._save_timer is not None  # waiting
     saves = coordinator.save_count
+    coordinator._save_timer()  # the real timer is spent when it fires
     coordinator._save_due(None)  # what the timer does
     await hass.async_block_till_done(wait_background_tasks=True)
     assert coordinator.save_count == saves + 1

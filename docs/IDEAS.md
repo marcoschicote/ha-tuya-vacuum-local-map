@@ -14,7 +14,6 @@ Things that came up and are **not planned**. Nothing here is a commitment, and n
 - **Zones from the 21003 echo.** When the app starts a zone clean it sends every zone and virtual wall, and the vacuum echoes that back (**[Reported]** on the Kabum, shape unknown). It is the only local way to learn zones.
 - **Room commands.** Starting a clean for chosen rooms is the first thing that would write to the vacuum, so it needs the owner's explicit approval (AGENTS.md rule 2), starting with one approved test. One report on a vacuum in the binary family says room commands get overwritten unless they carry a session token from Tuya's cloud ([tuya-local discussion #5556](https://github.com/make-all/tuya-local/discussions/5556)), so sending may not work here either.
 - **Protocol versions 3.4 and 3.5.** The connection is written for them, but the fake vacuum in the tests only speaks 3.3. It would need the session-key handshake.
-- **Reading the Rowenta's own area DP** (`cur_clean_area`, DP 108) for the calibration check. The coordinator recognises frames by content, so this would be a model-specific reader, kept out of `core/`.
 - **PNG output** (via Pillow) if an SVG doesn't show in some dashboard or app.
 - **More than one vacuum** in a home, with the maps kept apart. Today each config entry is one vacuum, so this may already work: untested.
 - **Translations** beyond English.

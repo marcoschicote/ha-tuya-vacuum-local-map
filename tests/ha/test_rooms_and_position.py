@@ -5,6 +5,7 @@ import xml.etree.ElementTree as ET
 
 import pytest
 
+from custom_components.tuya_vacuum_local_map.const import CONF_ROOM_NAMES
 from custom_components.tuya_vacuum_local_map.core.render import ROOM_OPACITY
 from custom_components.tuya_vacuum_local_map.diagnostics import (
     async_get_config_entry_diagnostics,
@@ -286,4 +287,51 @@ async def test_diagnostics_still_hold_nothing_private_with_outlines(hass, clock)
     result = await async_get_config_entry_diagnostics(hass, entry)
     text = json.dumps(result)
     assert "Sótano" not in text and result["state"]["rooms_with_outlines"] == 1
+    await hass.config_entries.async_unload(entry.entry_id)
+
+
+async def test_dp_108_is_the_reported_area_when_there_is_no_status(hass, clock):
+    entry = await setup_entry(hass)
+    coordinator = entry.runtime_data
+    await feed(hass, entry, {"108": 0})  # a run starting: not an area
+    assert coordinator.reported_area is None
+    await feed(hass, entry, chunk_dps(RUN_A, 0, serpentine()))
+    await feed(hass, entry, {"108": 11.5})
+    await feed(hass, entry, {"108": 0})  # reset before the run is counted
+    await feed(hass, entry, {"108": True})
+    await end_run(hass, entry, CLOCK)
+    (row,) = coordinator.calibration
+    assert row["reported_area"] == 11.5
+    await hass.config_entries.async_unload(entry.entry_id)
+
+
+async def test_a_status_area_outranks_dp_108(hass, clock):
+    entry = await setup_entry(hass)
+    coordinator = entry.runtime_data
+    await feed(hass, entry, {"102": envelope(20001, {"cleanArea": 11})})
+    await feed(hass, entry, {"108": 99})
+    assert coordinator.reported_area == 11
+    await hass.config_entries.async_unload(entry.entry_id)
+
+
+# --- room names given by the user ---
+
+
+async def test_a_name_from_the_options_labels_a_learned_room(hass, clock):
+    entry = await setup_entry(hass, options={CONF_ROOM_NAMES: {"1": "Den"}})
+    coordinator = entry.runtime_data
+    await clean_room(hass, entry, 1, RUN_A)  # no room list ever arrives
+    assert coordinator.rooms == {}
+    assert coordinator.visible_rooms == {1: "Den"}
+    root = ET.fromstring(coordinator.svg)
+    assert [t.text for t in root.iter(f"{NS}text")] == ["Den"]
+    await hass.config_entries.async_unload(entry.entry_id)
+
+
+async def test_a_name_from_the_options_replaces_the_vacuums(hass, clock):
+    entry = await setup_entry(hass, options={CONF_ROOM_NAMES: {"1": "Den"}})
+    coordinator = entry.runtime_data
+    await feed(hass, entry, rooms_dps())
+    assert coordinator.named_rooms[1] == "Den"
+    assert coordinator.rooms[1] == "Hall"
     await hass.config_entries.async_unload(entry.entry_id)
