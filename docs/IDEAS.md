@@ -5,6 +5,7 @@ Things that came up and are **not planned**. Nothing here is a commitment, and n
 ## Out of scope on purpose
 
 - **Floor plans.** Many Tuya vacuums only upload their floor plan to the cloud, so this project shows where the vacuum went, not where the walls are. For the cloud floor plan, see [Tuya Vacuum Maps](https://github.com/jaidenlabelle/tuya-vacuum-maps).
+- **Smoothing the coverage edges.** The map's edges are stair-steps, since it is a grid of 5 cm cells. On 2026-11-08 the owner tried rounding them on a real map, by putting a blur and a threshold filter over each coverage band (done outside the repo, viewed in Chrome only). It cleaned up the speckle along the edges and made no other visible difference. It also closes narrow gaps between strips, which hides real detail, and it adds no wall information. It wasn't built. Tracing and rounding each outline in `core/` would give the same look in every renderer, if someone wants it later. It came up in [#19](https://github.com/marcoschicote/ha-tuya-vacuum-local-map/issues/19), where a map built from Tuya's cloud data looks better because it has walls.
 - **Vacuums on the binary protocol family** (`path_data` on DP 14, `command_trans` on DP 15). A different set of messages; none was captured here.
 
 ## Ideas
