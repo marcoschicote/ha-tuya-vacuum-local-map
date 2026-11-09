@@ -21,7 +21,7 @@ A Home Assistant integration that draws where a Tuya robot vacuum has cleaned, u
 
 You need Home Assistant 2026.2 or newer (the version it is tested on).
 
-**With HACS:** search for **Tuya Vacuum Local Map** in HACS, install it, and restart Home Assistant. If it doesn't show up yet, add this repository as a custom repository (category: Integration) first.
+**With HACS:** search for **Tuya Vacuum Local Map** in HACS, install it, and restart Home Assistant.
 
 **By hand:** copy `custom_components/tuya_vacuum_local_map` into your Home Assistant `custom_components` folder and restart.
 
