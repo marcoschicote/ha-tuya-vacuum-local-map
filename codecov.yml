@@ -1,0 +1,7 @@
+coverage:
+  status:
+    project:
+      default:
+        # Coverage moves a little between runs of the same code (async timing),
+        # so a drop under half a point is noise, not a regression.
+        threshold: 0.5%
