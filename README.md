@@ -1,5 +1,9 @@
 # Tuya Vacuum Local Map
 
+[![CI](https://github.com/marcoschicote/ha-tuya-vacuum-local-map/actions/workflows/ci.yml/badge.svg)](https://github.com/marcoschicote/ha-tuya-vacuum-local-map/actions/workflows/ci.yml)
+[![HACS Custom](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://hacs.xyz/docs/faq/custom_repositories/)
+[![codecov](https://codecov.io/gh/marcoschicote/ha-tuya-vacuum-local-map/graph/badge.svg)](https://codecov.io/gh/marcoschicote/ha-tuya-vacuum-local-map)
+
 A Home Assistant integration that draws where a Tuya robot vacuum has cleaned, using only its local connection. No cloud, no Tuya account (once you have the vacuum's local key).
 
 ![A simulated coverage map: two rooms, shaded by how often each spot was cleaned, with the latest path and the vacuum's position](docs/sample-map.svg)
