@@ -17,18 +17,6 @@ A Home Assistant integration that draws where a Tuya robot vacuum has cleaned, u
 - Learns room outlines from runs you start for a single room in the app, and labels them.
 - **Read-only.** It only asks for the status and sends keep-alive messages. It never sends a command, so it can't start the vacuum or wipe its map.
 
-## Entities
-
-| Entity | What it shows |
-|---|---|
-| Coverage map (image) | The map, as an SVG |
-| Rooms (sensor) | How many rooms the vacuum has, with their IDs and names in an attribute |
-| Current room (sensor) | The room under the vacuum during a run, once its outline is learned |
-| Run points (sensor) | Points in the current or last run |
-| Covered area (diagnostic sensor) | Area covered, in m² |
-| Connected (binary sensor) | Whether the connection to the vacuum is up |
-| Reset map (button, off by default) | Clears the map this integration keeps. Sends nothing to the vacuum |
-
 ## Install
 
 You need Home Assistant 2026.2 or newer (the version it is tested on).
@@ -52,6 +40,18 @@ The form also asks for the **protocol version**. 3.3 is right for most vacuums. 
 The key is stored in Home Assistant like any integration's credentials. It is never logged, and diagnostics leave it out.
 
 **Options** (the integration's *Configure* button): name rooms the vacuum never named, one `id: name` per line (see [Limits](#limits)); hide rooms the vacuum detected but never goes to, such as a balcony; set the brush width (default 300) and how many of the vacuum's units make a metre (default 1000, so millimetres). Changing them reloads the integration.
+
+## Entities
+
+| Entity | What it shows |
+|---|---|
+| Coverage map (image) | The map, as an SVG |
+| Rooms (sensor) | How many rooms the vacuum has, with their IDs and names in an attribute |
+| Current room (sensor) | The room under the vacuum during a run, once its outline is learned |
+| Run points (sensor) | Points in the current or last run |
+| Covered area (diagnostic sensor) | Area covered, in m² |
+| Connected (binary sensor) | Whether the connection to the vacuum is up |
+| Reset map (button, off by default) | Clears the map this integration keeps. Sends nothing to the vacuum |
 
 ## Show the map
 
@@ -83,7 +83,7 @@ Vacuums that send base64 JSON messages with an `infoType` field on raw data poin
 | Vacuum | Evidence |
 |---|---|
 | Rowenta X-plorer (category `sd`, protocol 3.3) | Captured locally; the integration is built against it |
-| Kabum Smart 900 (category `sd`, protocol 3.3) | [Reported](https://github.com/xZetsubou/hass-localtuya/issues/900) |
+| KaBuM! Smart 900 (category `sd`, protocol 3.3) | Run on this integration by a user ([#19](https://github.com/marcoschicote/ha-tuya-vacuum-local-map/issues/19)): path, learned room outline and area (21.59 m² against the vacuum's 22 m²) check out, alongside LocalTuya. It sends the room list only when the app's map screen is open. Also [reported](https://github.com/xZetsubou/hass-localtuya/issues/900) |
 | iHome AutoVac Nova | [Reported](https://github.com/make-all/tuya-local/issues/1660) |
 
 The integration finds these messages by content, not by data point number, because the numbers differ by maker, so there's nothing to configure per model.
@@ -97,11 +97,3 @@ The diagnostics hold counts and field names only: how many messages of each type
 ## Privacy
 
 Everything stays on your network. The integration makes no cloud calls. The map it keeps (the cleaned cells, room names and IDs, and the last run's path) is stored in your Home Assistant's `.storage` folder, and is deleted when you remove the integration. The vacuum's map ID is never stored, only a salted hash of it.
-
-## For developers
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for how to set up, run the checks and find your way around the docs.
-
-## License
-
-MIT
