@@ -508,6 +508,17 @@ async def test_diagnostics_hold_counts_and_nothing_private(hass, clock):
     await hass.config_entries.async_unload(entry.entry_id)
 
 
+async def test_diagnostics_count_the_room_options_and_never_show_names(hass):
+    entry = await setup_entry(
+        hass,
+        {"room_names": {"7": "Test Room"}, "hidden_rooms": ["3", "4"], "brush": 250},
+    )
+    result = await async_get_config_entry_diagnostics(hass, entry)
+    assert "Test Room" not in json.dumps(result)
+    assert result["options"] == {"brush": 250, "hidden_rooms": 2, "room_names": 1}
+    await hass.config_entries.async_unload(entry.entry_id)
+
+
 async def test_removing_the_integration_deletes_its_stored_map(
     hass, clock, hass_storage
 ):
