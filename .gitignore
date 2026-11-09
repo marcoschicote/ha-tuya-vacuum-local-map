@@ -13,3 +13,4 @@ captures/
 .private-terms
 
 *.egg-info/
+coverage.xml
