@@ -105,5 +105,5 @@ It then tags the commit and publishes the release, as a pre-release if the versi
 `-`. Set the manifest version first, and cut a full release only after this procedure has
 passed on at least one real model.
 
-Before a release, check that the README is up to date: the status line and version, the
+Before a release, check that the README is up to date: the version, the
 Options paragraph, the Limits, and anything else the release changes for users.
