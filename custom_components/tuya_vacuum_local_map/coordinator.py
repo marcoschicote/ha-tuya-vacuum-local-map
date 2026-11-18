@@ -245,6 +245,33 @@ class Coordinator:
             :16
         ]
 
+    def evidence(self) -> dict[str, Any]:
+        """What diagnostics report and a save doesn't keep, so an options reload can
+        hand it to the next coordinator instead of wiping it."""
+        return {
+            "reported_area": self.reported_area,
+            "status_seen": self._status_seen,
+            "calibration": list(self.calibration),
+            "frame_counts": Counter(self.frame_counts),
+            "unknown_types": {k: list(v) for k, v in self.unknown_types.items()},
+            "largest_frame": self.largest_frame,
+            "counted_total": self.tracker.counted_total,
+            "counts": list(self.tracker.recent_counts),
+        }
+
+    def adopt_evidence(self, evidence: dict[str, Any]) -> None:
+        self.reported_area = evidence["reported_area"]
+        self._status_seen = evidence["status_seen"]
+        self.calibration = evidence["calibration"]
+        self.frame_counts = evidence["frame_counts"]
+        self.unknown_types = evidence["unknown_types"]
+        self.largest_frame = evidence["largest_frame"]
+
+    def adopt_counts(self, evidence: dict[str, Any]) -> None:
+        """Run after async_load, which replaces the tracker."""
+        self.tracker.counted_total = evidence["counted_total"]
+        self.tracker._counts.extend(evidence["counts"])  # noqa: SLF001
+
     async def async_load(self) -> None:
         stored = await self.store.async_load()
         if stored is None:

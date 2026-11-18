@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 
     from .coordinator import TuyaVacuumConfigEntry
 
+_EVIDENCE = "tuya_vacuum_local_map_evidence"
 PLATFORMS = ["image", "sensor", "binary_sensor", "button"]
 
 
@@ -24,6 +25,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: TuyaVacuumConfigEntry) -
     )
     coordinator = module.Coordinator(hass, entry)
     await coordinator.async_load()
+    # An options save reloads the entry: keep the diagnostics evidence across it.
+    evidence = hass.data.get(_EVIDENCE, {}).pop(entry.entry_id, None)
+    if evidence is not None:
+        coordinator.adopt_evidence(evidence)
+        coordinator.adopt_counts(evidence)
     entry.runtime_data = coordinator
     entry.async_on_unload(entry.add_update_listener(_reload_on_options_change))
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
@@ -41,6 +47,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: TuyaVacuumConfigEntry) 
 async def _reload_on_options_change(
     hass: HomeAssistant, entry: TuyaVacuumConfigEntry
 ) -> None:
+    hass.data.setdefault(_EVIDENCE, {})[entry.entry_id] = entry.runtime_data.evidence()
     await hass.config_entries.async_reload(entry.entry_id)
 
 

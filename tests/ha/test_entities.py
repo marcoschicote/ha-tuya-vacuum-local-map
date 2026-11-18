@@ -597,3 +597,25 @@ async def test_an_out_of_range_path_id_does_not_crash_run_points(hass, clock):
     assert sensor.attributes["path_id"] == bad  # the raw id is still there
     assert "started" not in sensor.attributes  # left out, since it can't be a datetime
     await hass.config_entries.async_unload(entry.entry_id)
+
+
+async def test_saving_options_keeps_the_diagnostics_evidence(hass, clock):
+    entry = await setup_entry(hass)
+    await run_once(hass, entry, clock)
+    before = entry.runtime_data.diagnostics()
+    assert before["frames_by_info_type"] and before["counted_since_start"] >= 1
+
+    hass.config_entries.async_update_entry(entry, options={"brush": 100})
+    await hass.async_block_till_done()
+
+    after = entry.runtime_data.diagnostics()
+    for key in (
+        "frames_by_info_type",
+        "largest_frame",
+        "calibration",
+        "reported_area",
+        "recent_counts",
+        "counted_since_start",
+    ):
+        assert after[key] == before[key], key
+    await hass.config_entries.async_unload(entry.entry_id)
