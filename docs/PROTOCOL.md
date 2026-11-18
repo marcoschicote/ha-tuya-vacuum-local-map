@@ -217,7 +217,7 @@ These are normal, unencoded DPs, specific to that model. Useful for checking the
 | 105 | `robot_state` | `fullcharge` → `selectroom` (run starts) → `tocharge` (returning) → `chargring` (docked, charging) |
 | 106 | `battery` | Percent |
 | 107 | `cur_clean_time` | Updated about once a minute during a run |
-| 108 | `cur_clean_area` | Current run, in m² **[Seen]** on the Kabum Smart 900 (22 m² reported against 21.59 m² mapped, so the units are mm there); presumably the same on the Rowenta. Updated a few times per run. The integration reads it for the calibration when a model sends no 20001 |
+| 108 | `cur_clean_area` | Current run, in m² **[Seen]** on the Kabum Smart 900 (22 m² reported against 21.59 m² mapped, so the units are mm there); presumably the same on the Rowenta. Updated a few times per run. The integration reads it for the calibration when a model sends no 20001. It counts whole m² and only the cleaned area, so a short run with a long way from the dock reads high against the map (5.69 m² mapped against 5 for a hallway, 12.99 against 13 for a living room) **[Seen]**; it keeps the last run's value after docking |
 | 116–121 | Lifetime counters and brush timers | All updated together right after docking |
 | 125 | `request_data` | `map`, `path` or `both`. Sending `map` while docked produced nothing large **[Described]** |
 | 128 | `message_report` | `6` = clean finished **[Described]**; it was `6` in the first status of the capture |
